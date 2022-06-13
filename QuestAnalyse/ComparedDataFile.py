@@ -19,6 +19,7 @@ from collections import Counter
 import matplotlib.gridspec as gridspec
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy import stats
+from statsmodels.stats.weightstats import ztest
 
 class ComparedDataFile():
     
@@ -59,7 +60,8 @@ class ComparedDataFile():
         
         print("loading first file...")
         #openning files
-        xfile = openpyxl.load_workbook(r'.\excDoc\Short_UEQ_Data_Analysis_Tool.xlsx')
+        pathAct = str(os.path.join(Path().absolute(), "excDoc", "Short_UEQ_Data_Analysis_Tool.xlsx"))
+        xfile = openpyxl.load_workbook(pathAct)
         sheet = xfile['Data']
         df = pd.read_excel(path)
         df = df.to_dict()
@@ -936,57 +938,134 @@ class ComparedDataFile():
                 print("pdf downloaded !")
         
         if format=='tab':
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.mentLoadData[0],self.mentLoadData2[0])
-            one_tailed_p_value=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value<=alpha:
-                res1 = 'file 2'
-            else:
-                res1 = 'file 1'
-            ###   
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.mentLoadData[1],self.mentLoadData2[1])
-            one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value2<=alpha:
-                res2 = 'file 2'
-            else:
-                res2 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.mentLoadData[2],self.mentLoadData2[2])
-            one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value3<=alpha:
-                res3 = 'file 2'
-            else:
-                res3 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.mentLoadData[3],self.mentLoadData2[3])
-            one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value4<=alpha:
-                res4 = 'file 2'
-            else:
-                res4 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.mentLoadData[4],self.mentLoadData2[4])
-            one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value5<=alpha:
-                res5 = 'file 2'
-            else:
-                res5 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.mentLoadData[5],self.mentLoadData2[5])
-            one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value6<=alpha:
-                res6 = 'file 2'
-            else:
-                res6 = 'file 1'
-            ###
-            d = {'categories': ['Mentally demanding', 'Physicaly demanding', 'Hurried or rushed pace','difficulty', 'success', 'overall easiness to use'], 'file 1': [3, 4,3, 5, 1, 6], 'file 2': [3, 4,3, 5, 1, 6], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
+            if self.size<=30 and self.size2<=30:
+                print('t-test')
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.mentLoadData[0],self.mentLoadData2[0])
+                one_tailed_p_value=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value<=alpha:
+                    res1 = 'file 2'
+                else:
+                    res1 = 'file 1'
+                ###   
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.mentLoadData[1],self.mentLoadData2[1])
+                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value2<=alpha:
+                    res2 = 'file 2'
+                else:
+                    res2 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.mentLoadData[2],self.mentLoadData2[2])
+                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value3<=alpha:
+                    res3 = 'file 2'
+                else:
+                    res3 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.mentLoadData[3],self.mentLoadData2[3])
+                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value4<=alpha:
+                    res4 = 'file 2'
+                else:
+                    res4 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.mentLoadData[4],self.mentLoadData2[4])
+                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value5<=alpha:
+                    res5 = 'file 2'
+                else:
+                    res5 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.mentLoadData[5],self.mentLoadData2[5])
+                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value6<=alpha:
+                    res6 = 'file 2'
+                else:
+                    res6 = 'file 1'
+                ###
+                d = {'categories': ['Mentally demanding', 'Physicaly demanding', 'Hurried or rushed pace','difficulty', 'success', 'overall easiness to use'], 'file 1': [self.mentLoad[0][0], self.mentLoad[0][1],self.mentLoad[0][2],self.mentLoad[0][3], self.mentLoadSuccess[0][0], self.mentLoadSuccess[0][1]], 'file 2': [self.mentLoad2[0][0], self.mentLoad2[0][1],self.mentLoad2[0][2],self.mentLoad2[0][3], self.mentLoadSuccess2[0][0], self.mentLoadSuccess2[0][1]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+            else: 
+                print("z-test")
+                
+                print("mean file 1"+str(self.mentLoad[0]))
+                print("mean file 2"+str(self.mentLoad2[0]))
+                ztest_Score, p_value= ztest(x1=self.mentLoad[0], x2=self.mentLoad2[0], alternative='larger')
+                #ztest_Score, p_value= ztest(x1=[2,3,1,2], x2=[7,9,9,8], alternative='larger')
+                print(str(p_value))
+                # the function outputs a p_value and z-score corresponding to that value, we compare the 
+                # p-value with alpha, if it is greater than alpha then we do not null hypothesis 
+                # else we reject it.
+
+                if(p_value<alpha):
+                    print("file 1 superior")
+                else:
+                    print("file 2 superior")
+                    
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[0], x2=self.mentLoadData2[0], alternative='larger')
+                one_tailed_p_value=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value>=alpha:
+                    res1 = 'file 2'
+                else:
+                    res1 = 'file 1'
+                ###   
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[1], x2=self.mentLoadData2[1], alternative='larger')
+                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value2>=alpha:
+                    res2 = 'file 2'
+                else:
+                    res2 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[2], x2=self.mentLoadData2[2], alternative='larger')
+                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value3>=alpha:
+                    res3 = 'file 2'
+                else:
+                    res3 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[3], x2=self.mentLoadData2[3], alternative='larger')
+                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value4>=alpha:
+                    res4 = 'file 2'
+                else:
+                    res4 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[4], x2=self.mentLoadData2[4], alternative='larger')
+                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value5>=alpha:
+                    res5 = 'file 2'
+                else:
+                    res5 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[5], x2=self.mentLoadData2[5], alternative='larger')
+                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value6>=alpha:
+                    res6 = 'file 2'
+                else:
+                    res6 = 'file 1'
+                ###
+                d = {'categories': ['Mentally demanding', 'Physicaly demanding', 'Hurried or rushed pace','difficulty', 'success', 'overall easiness to use'], 'file 1': [self.mentLoad[0][0], self.mentLoad[0][1],self.mentLoad[0][2],self.mentLoad[0][3], self.mentLoadSuccess[0][0], self.mentLoadSuccess[0][1]], 'file 2': [self.mentLoad2[0][0], self.mentLoad2[0][1],self.mentLoad2[0][2],self.mentLoad2[0][3], self.mentLoadSuccess2[0][0], self.mentLoadSuccess2[0][1]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+                
+                # ztest ,propability_value = stests.ztest(x1=self.mentLoad[0], x2=self.mentLoad2[0], value=146)
+                # print(float(propability_value))
+                # if propability_value<0.05:
+                #     print("Null hyphothesis rejected , Alternative hyphothesis accepted")
+                # else:
+                #     print("Null hyphothesis accepted , Alternative hyphothesis rejected")
 
             #pdf download
             if save=='pdf':
@@ -1404,129 +1483,253 @@ class ComparedDataFile():
                 print("pdf downloaded !")
         
         if format=='tab':
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterSysData[0],self.softUsInterSysData2[0])
-            one_tailed_p_value=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value<=alpha:
-                res1 = 'file 2'
-            else:
-                res1 = 'file 1'
-            ###   
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterSysData[1],self.softUsInterSysData2[1])
-            one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value2<=alpha:
-                res2 = 'file 2'
-            else:
-                res2 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterSysData[2],self.softUsInterSysData2[2])
-            one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value3<=alpha:
-                res3 = 'file 2'
-            else:
-                res3 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterSysData[3],self.softUsInterSysData2[3])
-            one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value4<=alpha:
-                res4 = 'file 2'
-            else:
-                res4 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterSysData[4],self.softUsInterSysData2[4])
-            one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value5<=alpha:
-                res5 = 'file 2'
-            else:
-                res5 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterSysData[5],self.softUsInterSysData2[5])
-            one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value6<=alpha:
-                res6 = 'file 2'
-            else:
-                res6 = 'file 1'
-            ###
-            #######################################################################################################################################
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInfoData[0],self.softUsInfoData2[0])
-            one_tailed_p_value7=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value7<=alpha:
-                res7 = 'file 2'
-            else:
-                res7 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInfoData[1],self.softUsInfoData2[1])
-            one_tailed_p_value8=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value8<=alpha:
-                res8 = 'file 2'
-            else:
-                res8 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInfoData[2],self.softUsInfoData2[2])
-            one_tailed_p_value9=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value9<=alpha:
-                res9 = 'file 2'
-            else:
-                res9 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInfoData[3],self.softUsInfoData2[3])
-            one_tailed_p_value0=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value0<=alpha:
-                res0 = 'file 2'
-            else:
-                res0 = 'file 1'
-            ###
-            #################################################################################################################################
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[0],self.softUsInterfaceData2[0])
-            one_tailed_p_value11=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value11<=alpha:
-                res11 = 'file 2'
-            else:
-                res11 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[1],self.softUsInterfaceData2[1])
-            one_tailed_p_value12=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value12<=alpha:
-                res12 = 'file 2'
-            else:
-                res12 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[2],self.softUsInterfaceData2[2])
-            one_tailed_p_value13=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value13<=alpha:
-                res13 = 'file 2'
-            else:
-                res13 = 'file 1'
-            ###
-            d = {'categories': ['Simplicity to use', 'helped effectivness of my work', 'helped pace of my work','confortable system', 'easy recovery after mistake', 'overall satisfaction'], 'file 1': [3, 4,3, 5, 1, 6], 'file 2': [3, 4,3, 5, 1, 6], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
+            if self.size<=30 and self.size<=30:
+                print("t test")
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[0],self.softUsInterSysData2[0])
+                one_tailed_p_value=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value<=alpha:
+                    res1 = 'file 2'
+                else:
+                    res1 = 'file 1'
+                ###   
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[1],self.softUsInterSysData2[1])
+                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value2<=alpha:
+                    res2 = 'file 2'
+                else:
+                    res2 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[2],self.softUsInterSysData2[2])
+                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value3<=alpha:
+                    res3 = 'file 2'
+                else:
+                    res3 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[3],self.softUsInterSysData2[3])
+                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value4<=alpha:
+                    res4 = 'file 2'
+                else:
+                    res4 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[4],self.softUsInterSysData2[4])
+                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value5<=alpha:
+                    res5 = 'file 2'
+                else:
+                    res5 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[5],self.softUsInterSysData2[5])
+                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value6<=alpha:
+                    res6 = 'file 2'
+                else:
+                    res6 = 'file 1'
+                ###
+                #######################################################################################################################################
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInfoData[0],self.softUsInfoData2[0])
+                one_tailed_p_value7=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value7<=alpha:
+                    res7 = 'file 2'
+                else:
+                    res7 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInfoData[1],self.softUsInfoData2[1])
+                one_tailed_p_value8=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value8<=alpha:
+                    res8 = 'file 2'
+                else:
+                    res8 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInfoData[2],self.softUsInfoData2[2])
+                one_tailed_p_value9=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value9<=alpha:
+                    res9 = 'file 2'
+                else:
+                    res9 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInfoData[3],self.softUsInfoData2[3])
+                one_tailed_p_value0=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value0<=alpha:
+                    res0 = 'file 2'
+                else:
+                    res0 = 'file 1'
+                ###
+                #################################################################################################################################
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[0],self.softUsInterfaceData2[0])
+                one_tailed_p_value11=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value11<=alpha:
+                    res11 = 'file 2'
+                else:
+                    res11 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[1],self.softUsInterfaceData2[1])
+                one_tailed_p_value12=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value12<=alpha:
+                    res12 = 'file 2'
+                else:
+                    res12 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[2],self.softUsInterfaceData2[2])
+                one_tailed_p_value13=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value13<=alpha:
+                    res13 = 'file 2'
+                else:
+                    res13 = 'file 1'
+                ###
+                d = {'categories': ['Simplicity to use', 'helped effectivness of my work', 'helped pace of my work','confortable system', 'easy recovery after mistake', 'overall satisfaction'], 'file 1': [self.softUs[0][0], self.softUs[0][1],self.softUs[0][2], self.softUs[0][3], self.softUs[0][4], self.softUs[0][5]], 'file 2': [self.softUs2[0][0], self.softUs2[0][1],self.softUs2[0][2], self.softUs2[0][3], self.softUs2[0][4], self.softUs2[0][5]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
 
-            d = {'categories': ['clear', 'easy to find', 'effective','organized'], 'file 1': [3, 4,3, 5], 'file 2': [3, 4,3, 5], 'p-value': [one_tailed_p_value7, one_tailed_p_value8, one_tailed_p_value9, one_tailed_p_value0], 'Best file': [res7, res8, res9, res0]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
+                d = {'categories': ['clear', 'easy to find', 'effective','organized'], 'file 1': [self.softUsInfo[0][0], self.softUsInfo[0][1],self.softUsInfo[0][2], self.softUsInfo[0][3]], 'file 2': [self.softUsInfo2[0][0], self.softUsInfo2[0][1],self.softUsInfo2[0][2], self.softUsInfo2[0][3]], 'p-value': [one_tailed_p_value7, one_tailed_p_value8, one_tailed_p_value9, one_tailed_p_value0], 'Best file': [res7, res8, res9, res0]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
 
-            d = {'categories': ['pleasant', 'I like using the interface', 'has all the functions and capabilities excpeted'], 'file 1': [3, 4,3], 'file 2': [3, 4,3], 'p-value': [one_tailed_p_value11, one_tailed_p_value12, one_tailed_p_value13], 'Best file': [res11, res12, res13]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
+                d = {'categories': ['pleasant', 'I like using the interface', 'has all the functions and capabilities excpeted'], 'file 1': [self.softUsInterface[0][0], self.softUsInterface[0][1],self.softUsInterface[0][2]], 'file 2': [self.softUsInterface2[0][0], self.softUsInterface2[0][1],self.softUsInterface2[0][2]], 'p-value': [one_tailed_p_value11, one_tailed_p_value12, one_tailed_p_value13], 'Best file': [res11, res12, res13]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
 
-            if save=='pdf':
-                print("loading pdf...")
-                path=str(os.path.join(Path.home(), "Downloads", "Software_Usability.pdf"))
-                fig.savefig(path,  bbox_inches='tight')
-                print("pdf downloaded !")
+                if save=='pdf':
+                    print("loading pdf...")
+                    path=str(os.path.join(Path.home(), "Downloads", "Software_Usability.pdf"))
+                    fig.savefig(path,  bbox_inches='tight')
+                    print("pdf downloaded !")
+                    
+            else:
+                print("z-test")
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[0], x2=self.softUsInterSysData2[0], alternative='larger')
+                one_tailed_p_value=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value>=alpha:
+                    res1 = 'file 2'
+                else:
+                    res1 = 'file 1'
+                ###   
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[1], x2=self.softUsInterSysData2[1], alternative='larger')
+                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value2>=alpha:
+                    res2 = 'file 2'
+                else:
+                    res2 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[2], x2=self.softUsInterSysData2[2], alternative='larger')
+                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value3>=alpha:
+                    res3 = 'file 2'
+                else:
+                    res3 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[3], x2=self.softUsInterSysData2[3], alternative='larger')
+                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value4>=alpha:
+                    res4 = 'file 2'
+                else:
+                    res4 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[4], x2=self.softUsInterSysData2[4], alternative='larger')
+                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value5>=alpha:
+                    res5 = 'file 2'
+                else:
+                    res5 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[5], x2=self.softUsInterSysData2[5], alternative='larger')
+                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value6>=alpha:
+                    res6 = 'file 2'
+                else:
+                    res6 = 'file 1'
+                ###
+                #######################################################################################################################################
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInfoData[0], x2=self.softUsInfoData2[0], alternative='larger')
+                one_tailed_p_value7=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value7>=alpha:
+                    res7 = 'file 2'
+                else:
+                    res7 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInfoData[1], x2=self.softUsInfoData2[1], alternative='larger')
+                one_tailed_p_value8=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value8>=alpha:
+                    res8 = 'file 2'
+                else:
+                    res8 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInfoData[2], x2=self.softUsInfoData2[2], alternative='larger')
+                one_tailed_p_value9=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value9>=alpha:
+                    res9 = 'file 2'
+                else:
+                    res9 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInfoData[3], x2=self.softUsInfoData2[3], alternative='larger')
+                one_tailed_p_value0=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value0>=alpha:
+                    res0 = 'file 2'
+                else:
+                    res0 = 'file 1'
+                ###
+                #################################################################################################################################
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterfaceData[0], x2=self.softUsInterfaceData2[0], alternative='larger')
+                one_tailed_p_value11=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value11>=alpha:
+                    res11 = 'file 2'
+                else:
+                    res11 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterfaceData[1], x2=self.softUsInterfaceData2[1], alternative='larger')
+                one_tailed_p_value12=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value12>=alpha:
+                    res12 = 'file 2'
+                else:
+                    res12 = 'file 1'
+                ###
+                ### t test 
+                ztest_Score, p_value= ztest(x1=self.softUsInterfaceData[2], x2=self.softUsInterfaceData2[2], alternative='larger')
+                one_tailed_p_value13=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value13>=alpha:
+                    res13 = 'file 2'
+                else:
+                    res13 = 'file 1'
+                ###
+                d = {'categories': ['Simplicity to use', 'helped effectivness of my work', 'helped pace of my work','confortable system', 'easy recovery after mistake', 'overall satisfaction'], 'file 1': [self.softUs[0][0], self.softUs[0][1],self.softUs[0][2], self.softUs[0][3], self.softUs[0][4], self.softUs[0][5]], 'file 2': [self.softUs2[0][0], self.softUs2[0][1],self.softUs2[0][2], self.softUs2[0][3], self.softUs2[0][4], self.softUs2[0][5]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+
+                d = {'categories': ['clear', 'easy to find', 'effective','organized'], 'file 1': [self.softUsInfo[0][0], self.softUsInfo[0][1],self.softUsInfo[0][2], self.softUsInfo[0][3]], 'file 2': [self.softUsInfo2[0][0], self.softUsInfo2[0][1],self.softUsInfo2[0][2], self.softUsInfo2[0][3]], 'p-value': [one_tailed_p_value7, one_tailed_p_value8, one_tailed_p_value9, one_tailed_p_value0], 'Best file': [res7, res8, res9, res0]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+
+                d = {'categories': ['pleasant', 'I like using the interface', 'has all the functions and capabilities excpeted'], 'file 1': [self.softUsInterface[0][0], self.softUsInterface[0][1],self.softUsInterface[0][2]], 'file 2': [self.softUsInterface2[0][0], self.softUsInterface2[0][1],self.softUsInterface2[0][2]], 'p-value': [one_tailed_p_value11, one_tailed_p_value12, one_tailed_p_value13], 'Best file': [res11, res12, res13]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+
+                
             
             
     def Software_Usability_Qual(self, format='display'):
@@ -2104,152 +2307,303 @@ class ComparedDataFile():
                 print("pdf downloaded !")
         
         if format=='tab':
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.PreSearchData[0],self.PreSearchData2[0])
-            one_tailed_p_value=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value<=alpha:
-                res1 = 'file 2'
-            else:
-                res1 = 'file 1'
-            ###   
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.PreSearchData[1],self.PreSearchData2[1])
-            one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value2<=alpha:
-                res2 = 'file 2'
-            else:
-                res2 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.PreSearchData[2],self.PreSearchData2[2])
-            one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value3<=alpha:
-                res3 = 'file 2'
-            else:
-                res3 = 'file 1'
-            ###
-            #######################################################################################################################
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.ContentSelectionData[0],self.ContentSelectionData2[0])
-            one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value4<=alpha:
-                res4 = 'file 2'
-            else:
-                res4 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.ContentSelectionData[1],self.ContentSelectionData2[1])
-            one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value5<=alpha:
-                res5 = 'file 2'
-            else:
-                res5 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.ContentSelectionData[2],self.ContentSelectionData2[2])
-            one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value6<=alpha:
-                res6 = 'file 2'
-            else:
-                res6 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.ContentSelectionData[3],self.ContentSelectionData2[3])
-            one_tailed_p_value7=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value7<=alpha:
-                res7 = 'file 2'
-            else:
-                res7 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.ContentSelectionData[4],self.ContentSelectionData2[4])
-            one_tailed_p_value8=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value8<=alpha:
-                res8 = 'file 2'
-            else:
-                res8 = 'file 1'
-            ###
-            #######################################################################################################################################
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.InteractionContentData[0],self.InteractionContentData2[0])
-            one_tailed_p_value9=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value9<=alpha:
-                res9 = 'file 2'
-            else:
-                res9 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.InteractionContentData[1],self.InteractionContentData2[1])
-            one_tailed_p_value0=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value0<=alpha:
-                res0 = 'file 2'
-            else:
-                res0 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.InteractionContentData[2],self.InteractionContentData2[2])
-            one_tailed_p_value11=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value11<=alpha:
-                res11 = 'file 2'
-            else:
-                res11 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.InteractionContentData[3],self.InteractionContentData2[3])
-            one_tailed_p_value12=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value12<=alpha:
-                res12 = 'file 2'
-            else:
-                res12 = 'file 1'
-            ###
-            #################################################################################################################################
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.PostSearchData[0],self.PostSearchData2[0])
-            one_tailed_p_value13=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value13<=alpha:
-                res13 = 'file 2'
-            else:
-                res13 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.PostSearchData[1],self.PostSearchData2[1])
-            one_tailed_p_value14=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value14<=alpha:
-                res14 = 'file 2'
-            else:
-                res14 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.PostSearchData[2],self.PostSearchData2[2])
-            one_tailed_p_value15=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value15<=alpha:
-                res15 = 'file 2'
-            else:
-                res15 = 'file 1'
-            ###
-            ### t test 
-            t_value,p_value=stats.ttest_rel(self.PostSearchData[3],self.PostSearchData2[3])
-            one_tailed_p_value16=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value16<=alpha:
-                res16 = 'file 2'
-            else:
-                res16 = 'file 1'
-            ###
-            d = {'categories': ['Background knowledge', 'Interest in topic', 'Anticipated difficulty'], 'file 1': [3, 4,3], 'file 2': [3, 4,3], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
+            if self.size<=30 and self.size2<=30:
+                print("t-test")
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.PreSearchData[0],self.PreSearchData2[0])
+                one_tailed_p_value=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value<=alpha:
+                    res1 = 'file 2'
+                else:
+                    res1 = 'file 1'
+                ###   
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.PreSearchData[1],self.PreSearchData2[1])
+                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value2<=alpha:
+                    res2 = 'file 2'
+                else:
+                    res2 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.PreSearchData[2],self.PreSearchData2[2])
+                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value3<=alpha:
+                    res3 = 'file 2'
+                else:
+                    res3 = 'file 1'
+                ###
+                #######################################################################################################################
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[0],self.ContentSelectionData2[0])
+                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value4<=alpha:
+                    res4 = 'file 2'
+                else:
+                    res4 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[1],self.ContentSelectionData2[1])
+                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value5<=alpha:
+                    res5 = 'file 2'
+                else:
+                    res5 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[2],self.ContentSelectionData2[2])
+                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value6<=alpha:
+                    res6 = 'file 2'
+                else:
+                    res6 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[3],self.ContentSelectionData2[3])
+                one_tailed_p_value7=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value7<=alpha:
+                    res7 = 'file 2'
+                else:
+                    res7 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[4],self.ContentSelectionData2[4])
+                one_tailed_p_value8=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value8<=alpha:
+                    res8 = 'file 2'
+                else:
+                    res8 = 'file 1'
+                ###
+                #######################################################################################################################################
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.InteractionContentData[0],self.InteractionContentData2[0])
+                one_tailed_p_value9=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value9<=alpha:
+                    res9 = 'file 2'
+                else:
+                    res9 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.InteractionContentData[1],self.InteractionContentData2[1])
+                one_tailed_p_value0=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value0<=alpha:
+                    res0 = 'file 2'
+                else:
+                    res0 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.InteractionContentData[2],self.InteractionContentData2[2])
+                one_tailed_p_value11=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value11<=alpha:
+                    res11 = 'file 2'
+                else:
+                    res11 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.InteractionContentData[3],self.InteractionContentData2[3])
+                one_tailed_p_value12=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value12<=alpha:
+                    res12 = 'file 2'
+                else:
+                    res12 = 'file 1'
+                ###
+                #################################################################################################################################
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.PostSearchData[0],self.PostSearchData2[0])
+                one_tailed_p_value13=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value13<=alpha:
+                    res13 = 'file 2'
+                else:
+                    res13 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.PostSearchData[1],self.PostSearchData2[1])
+                one_tailed_p_value14=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value14<=alpha:
+                    res14 = 'file 2'
+                else:
+                    res14 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.PostSearchData[2],self.PostSearchData2[2])
+                one_tailed_p_value15=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value15<=alpha:
+                    res15 = 'file 2'
+                else:
+                    res15 = 'file 1'
+                ###
+                ### t test 
+                t_value,p_value=stats.ttest_rel(self.PostSearchData[3],self.PostSearchData2[3])
+                one_tailed_p_value16=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value16<=alpha:
+                    res16 = 'file 2'
+                else:
+                    res16 = 'file 1'
+                ###
+                d = {'categories': ['Background knowledge', 'Interest in topic', 'Anticipated difficulty'], 'file 1': [self.PreSearch[0][0], self.PreSearch[0][1],self.PreSearch[0][2]], 'file 2': [self.PreSearch2[0][0], self.PreSearch2[0][1],self.PreSearch2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
 
-            d = {'categories': ['Actual difficulty', 'text presentation quality', 'average number of doc view per search','the usefullness of search results', 'text relevance'], 'file 1': [3, 4,3, 5,6], 'Best file': [3, 4,3, 5,6], 'p-value': [one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6,one_tailed_p_value7, one_tailed_p_value8], 'Best file': [res4, res5, res6, res7, res8]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
+                d = {'categories': ['Actual difficulty', 'text presentation quality', 'average number of doc view per search','the usefullness of search results', 'text relevance'], 'file 1': [self.ContentSelection[0][0], self.ContentSelection[0][1],self.ContentSelection[0][2],self.ContentSelection[0][3],self.ContentSelection[0][4]], 'file 2:': [self.ContentSelection2[0][0], self.ContentSelection2[0][1],self.ContentSelection2[0][2],self.ContentSelection2[0][3],self.ContentSelection2[0][4]], 'p-value': [one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6,one_tailed_p_value7, one_tailed_p_value8], 'Best file': [res4, res5, res6, res7, res8]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
 
-            d = {'categories': ['Cognitively engaged', 'Suggestion skills', 'System understanding input', 'average level of satisfaction'], 'file 1': [3, 4,3,5], 'file 2': [3, 4,3,5], 'p-value': [one_tailed_p_value9, one_tailed_p_value0,one_tailed_p_value11, one_tailed_p_value12], 'Best file': [res9, res0, res11, res12]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
+                d = {'categories': ['Cognitively engaged', 'Suggestion skills', 'System understanding input', 'average level of satisfaction'], 'file 1': [self.InteractionContent[0][0], self.InteractionContent[0][1],self.InteractionContent[0][2],self.InteractionContent[0][3]], 'file 2': [self.InteractionContent2[0][0], self.InteractionContent2[0][1],self.InteractionContent2[0][2],self.InteractionContent2[0][3]], 'p-value': [one_tailed_p_value9, one_tailed_p_value0,one_tailed_p_value11, one_tailed_p_value12], 'Best file': [res9, res0, res11, res12]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
 
-            d = {'categories': ['Search succes', 'Presentation of the search results', 'Expansion of knowledge after the search', 'Understanding about the topic'], 'file 1': [3, 4,3,5], 'file 2': [3, 4,3,5], 'p-value': [one_tailed_p_value13, one_tailed_p_value14,one_tailed_p_value15, one_tailed_p_value16], 'Best file': [res13, res14, res15, res16]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
+                d = {'categories': ['Search succes', 'Presentation of the search results', 'Expansion of knowledge after the search', 'Understanding about the topic'], 'file 1': [self.PostSearch[0][0], self.PostSearch[0][1],self.PostSearch[0][2],self.PostSearch[0][3]], 'file 2': [self.PostSearch2[0][0], self.PostSearch2[0][1],self.PostSearch2[0][2],self.PostSearch2[0][3]], 'p-value': [one_tailed_p_value13, one_tailed_p_value14,one_tailed_p_value15, one_tailed_p_value16], 'Best file': [res13, res14, res15, res16]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+            else:
+                
+                print("z-test en travaux")
+                ### z-test 
+                ztest_Score, p_value= ztest(x1=self.PreSearchData[0], x2=self.PreSearchData2[0], alternative='larger')
+                one_tailed_p_value=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value>=alpha:
+                    res1 = 'file 2'
+                else:
+                    res1 = 'file 1'
+                ###   
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.PreSearchData[1], x2=self.PreSearchData2[1], alternative='larger')
+                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value2>=alpha:
+                    res2 = 'file 2'
+                else:
+                    res2 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.PreSearchData[2], x2=self.PreSearchData2[2], alternative='larger')
+                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value3>=alpha:
+                    res3 = 'file 2'
+                else:
+                    res3 = 'file 1'
+                ###
+                #######################################################################################################################
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.ContentSelectionData[0], x2=self.ContentSelectionData2[0], alternative='larger')
+                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value4>=alpha:
+                    res4 = 'file 2'
+                else:
+                    res4 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.ContentSelectionData[1], x2=self.ContentSelectionData2[1], alternative='larger')
+                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value5>=alpha:
+                    res5 = 'file 2'
+                else:
+                    res5 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.ContentSelectionData[2], x2=self.ContentSelectionData2[2], alternative='larger')
+                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value6>=alpha:
+                    res6 = 'file 2'
+                else:
+                    res6 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.ContentSelectionData[3], x2=self.ContentSelectionData2[3], alternative='larger')
+                one_tailed_p_value7=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value7>=alpha:
+                    res7 = 'file 2'
+                else:
+                    res7 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.ContentSelectionData[4], x2=self.ContentSelectionData2[4], alternative='larger')
+                one_tailed_p_value8=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value8>=alpha:
+                    res8 = 'file 2'
+                else:
+                    res8 = 'file 1'
+                ###
+                #######################################################################################################################################
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.InteractionContentData[0], x2=self.InteractionContentData2[0], alternative='larger')
+                one_tailed_p_value9=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value9>=alpha:
+                    res9 = 'file 2'
+                else:
+                    res9 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.InteractionContentData[1], x2=self.InteractionContentData2[1], alternative='larger')
+                one_tailed_p_value0=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value0>=alpha:
+                    res0 = 'file 2'
+                else:
+                    res0 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.InteractionContentData[2], x2=self.InteractionContentData2[2], alternative='larger')
+                one_tailed_p_value11=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value11>=alpha:
+                    res11 = 'file 2'
+                else:
+                    res11 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.InteractionContentData[3], x2=self.InteractionContentData2[3], alternative='larger')
+                one_tailed_p_value12=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value12>=alpha:
+                    res12 = 'file 2'
+                else:
+                    res12 = 'file 1'
+                ###
+                #################################################################################################################################
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.PostSearchData[0], x2=self.PostSearchData2[0], alternative='larger')
+                one_tailed_p_value13=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value13>=alpha:
+                    res13 = 'file 2'
+                else:
+                    res13 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.PostSearchData[1], x2=self.PostSearchData2[1], alternative='larger')
+                one_tailed_p_value14=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value14>=alpha:
+                    res14 = 'file 2'
+                else:
+                    res14 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.PostSearchData[2], x2=self.PostSearchData2[2], alternative='larger')
+                one_tailed_p_value15=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value15>=alpha:
+                    res15 = 'file 2'
+                else:
+                    res15 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(x1=self.PostSearchData[3], x2=self.PostSearchData2[3], alternative='larger')
+                one_tailed_p_value16=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value16>=alpha:
+                    res16 = 'file 2'
+                else:
+                    res16 = 'file 1'
+                ###
+                d = {'categories': ['Background knowledge', 'Interest in topic', 'Anticipated difficulty'], 'file 1': [self.PreSearch[0][0], self.PreSearch[0][1],self.PreSearch[0][2]], 'file 2': [self.PreSearch2[0][0], self.PreSearch2[0][1],self.PreSearch2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+
+                d = {'categories': ['Actual difficulty', 'text presentation quality', 'average number of doc view per search','the usefullness of search results', 'text relevance'], 'file 1': [self.ContentSelection[0][0], self.ContentSelection[0][1],self.ContentSelection[0][2],self.ContentSelection[0][3],self.ContentSelection[0][4]], 'file 2:': [self.ContentSelection2[0][0], self.ContentSelection2[0][1],self.ContentSelection2[0][2],self.ContentSelection2[0][3],self.ContentSelection2[0][4]], 'p-value': [one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6,one_tailed_p_value7, one_tailed_p_value8], 'Best file': [res4, res5, res6, res7, res8]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+
+                d = {'categories': ['Cognitively engaged', 'Suggestion skills', 'System understanding input', 'average level of satisfaction'], 'file 1': [self.InteractionContent[0][0], self.InteractionContent[0][1],self.InteractionContent[0][2],self.InteractionContent[0][3]], 'file 2': [self.InteractionContent2[0][0], self.InteractionContent2[0][1],self.InteractionContent2[0][2],self.InteractionContent2[0][3]], 'p-value': [one_tailed_p_value9, one_tailed_p_value0,one_tailed_p_value11, one_tailed_p_value12], 'Best file': [res9, res0, res11, res12]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
+
+                d = {'categories': ['Search succes', 'Presentation of the search results', 'Expansion of knowledge after the search', 'Understanding about the topic'], 'file 1': [self.PostSearch[0][0], self.PostSearch[0][1],self.PostSearch[0][2],self.PostSearch[0][3]], 'file 2': [self.PostSearch2[0][0], self.PostSearch2[0][1],self.PostSearch2[0][2],self.PostSearch2[0][3]], 'p-value': [one_tailed_p_value13, one_tailed_p_value14,one_tailed_p_value15, one_tailed_p_value16], 'Best file': [res13, res14, res15, res16]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
             
             if save=='pdf':
                 print("loading pdf...")
@@ -2536,38 +2890,69 @@ class ComparedDataFile():
                 print("pdf downloaded !")
             
         if format=='tab':
-            ### t test Quality
-            t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[0],self.KnowledgeGainData2[0])
+            if self.size<=30 and self.size2<=30:
+                print("t-test")
+                ### t test Quality
+                t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[0],self.KnowledgeGainData2[0])
 
-            one_tailed_p_value=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value<=alpha:
-                res1 = 'file 2'
+                one_tailed_p_value=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value<=alpha:
+                    res1 = 'file 2'
+                else:
+                    res1 = 'file 1'
+                ###   
+                ### t test Interpretation
+                t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[1],self.KnowledgeGainData2[1])
+
+                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
+
+                if one_tailed_p_value2<=alpha:
+                    res2 = 'file 2'
+                else:
+                    res2 = 'file 1'
+                ###
+                ### t test critiques
+                t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[2],self.KnowledgeGainData2[2])
+
+                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value3<=alpha:
+                    res3 = 'file 2'
+                else:
+                    res3 = 'file 1'
+                ###
+                d = {'categories': ['Quality', 'Interpretation', 'Critiques'], 'file 1': [self.KnowledgeGain[0][0], self.KnowledgeGain[0][1],self.KnowledgeGain[0][2]], 'file 2': [self.KnowledgeGain2[0][0],self.KnowledgeGain2[0][1],self.KnowledgeGain2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
             else:
-                res1 = 'file 1'
-            ###   
-            ### t test Interpretation
-            t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[1],self.KnowledgeGainData2[1])
+                print("z-test")
+                ###z test Quality
+                ztest_Score, p_value= ztest(x1=self.KnowledgeGainData[0], x2=self.KnowledgeGainData2[0], alternative='larger')
+                one_tailed_p_value=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value>=alpha:
+                    res1 = 'file 2'
+                else:
+                    res1 = 'file 1'
+                ###   
+                ### z test Interpretation
+                ztest_Score, p_value= ztest(x1=self.KnowledgeGainData[1], x2=self.KnowledgeGainData2[1], alternative='larger')
+                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
 
-            one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-
-            if one_tailed_p_value2<=alpha:
-                res2 = 'file 2'
-            else:
-                res2 = 'file 1'
-            ###
-            ### t test critiques
-            t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[2],self.KnowledgeGainData2[2])
-
-            one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-            if one_tailed_p_value3<=alpha:
-                res3 = 'file 2'
-            else:
-                res3 = 'file 1'
-            ###
-            d = {'categories': ['Quality', 'Interpretation', 'Critiques'], 'file 1': [3, 4,3], 'file 2': [3, 4,3], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
-            tab = pd.DataFrame(data=d)
-            display (tab)
-
+                if one_tailed_p_value2>=alpha:
+                    res2 = 'file 2'
+                else:
+                    res2 = 'file 1'
+                ###
+                ### z test critiques
+                ztest_Score, p_value= ztest(x1=self.KnowledgeGainData[2], x2=self.KnowledgeGainData2[2], alternative='larger')
+                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
+                if one_tailed_p_value3>=alpha:
+                    res3 = 'file 2'
+                else:
+                    res3 = 'file 1'
+                ###
+                d = {'categories': ['Quality', 'Interpretation', 'Critiques'], 'file 1': [self.KnowledgeGain[0][0], self.KnowledgeGain[0][1],self.KnowledgeGain[0][2]], 'file 2': [self.KnowledgeGain2[0][0],self.KnowledgeGain2[0][1],self.KnowledgeGain2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
+                tab = pd.DataFrame(data=d)
+                display (tab)
             #pdf download
             if save=='pdf':
                 print("loading pdf...")
