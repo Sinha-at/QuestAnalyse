@@ -815,7 +815,7 @@ class dataFile():
         plt.rcParams["figure.figsize"] = (20,8)
         
         #System
-        fig= plt.figure()
+        fig= plt.figure().suptitle('System', fontsize=16)
         spec4 = fig.add_gridspec(ncols=3, nrows=2)
         anno_opts = dict(xy=(0.5, 0.5), xycoords='axes fraction',va='center', ha='center')
 
@@ -845,7 +845,7 @@ class dataFile():
         ax6=fig.add_subplot(spec4[1, 2])
         ax6.pie([self.softUs_SystemQual[0][5],self.softUs_SystemQual[1][5], self.softUs_SystemQual[2][5]],labels=['Negative','Neutral','Positive'], colors=['#DC2209','#EED238','#1CCD00'], autopct='%1.1f%%')
         ax6.set_title('overall satisfaction')
-        fig.suptitle('System', fontsize=16)
+        
          
             
         #Information
@@ -973,7 +973,7 @@ class dataFile():
 
                             ])
             display (df)
-            if format=='pdf':
+            if format=='pdf' or type=='pdf':
                 print("loading pdf...")
                 path=str(os.path.join(Path.home(), "Downloads", "Software_Coments.pdf"))
                 pathAct = str(os.path.join(Path().absolute(), "excDoc", "Software_Usability_coments.pdf"))    

@@ -25,11 +25,16 @@ class ComparedDataFile():
     
     warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
     
-    def __init__(self, path, path2):
+    def __init__(self, path, path2, link='independant'):
+        self.link=link
         self.processing(path)
         self.resPath=r'.\resExcel\DATAUPDATES.XLSX'
         self.processing2(path2)
         self.resPath=r'.\resExcel\DATAUPDATES2.XLSX'
+        self.diff_size=self.size==self.size2
+        print("size file 1: "+ str(self.size))
+        print("size file 2: "+ str(self.size2))
+        
         
         
 
@@ -787,7 +792,12 @@ class ComparedDataFile():
     #Cognitive load
     def cognitive_load(self, format,save='notActivated', alpha=0.05):
         
+        if type(save) != str:alpha=save
+        
+        print("level of significance: "+str(alpha))
+        
         if format=='graph':
+            
             plt.rcParams["figure.figsize"] = (16,8)
             fig= plt.figure()
             index = np.arange(4)
@@ -829,7 +839,8 @@ class ComparedDataFile():
 
 
             colorMean=[]
-            mean2=[[]]    
+            mean2=[[]]
+            
             mean2[0].append(self.mentLoad[0][0])
             mean2[0].append(self.mentLoad2[0][0])
             mean2[0].append(self.mentLoad[0][1])
@@ -871,6 +882,7 @@ class ComparedDataFile():
             ax2= fig.add_subplot(2,1,2)
             columns = ['success','Overall easiness to use']
             mean=self.mentLoadSuccess
+            colorMeanInv=[]
             roundMean=[round(mean, 1) for mean in mean[0]]
             #Color of the graph
             for i in range(len(roundMean)):
@@ -882,7 +894,8 @@ class ComparedDataFile():
                     colorMeanInv.append('#1CCD00')
 
             ax2.bar(index- width/2, mean[0], color=colorMeanInv, width = 0.25)
-
+            
+            colorMeanInv=[]
             mean=self.mentLoadSuccess2
             roundMean=[round(mean, 1) for mean in mean[0]]
             #Color of the graph
@@ -898,9 +911,9 @@ class ComparedDataFile():
 
             ax2.axhline(y=3.5, color='black')
             ax2.set_xticks([])
+            #enlever le diviser par deux pour plus value, mettre test_rel pour dependant test
 
-
-            colorMean=[]
+            colorMeanInv=[]
             mean2=[[]]    
             mean2[0].append(self.mentLoadSuccess[0][0])
             mean2[0].append(self.mentLoadSuccess2[0][0])
@@ -938,140 +951,299 @@ class ComparedDataFile():
                 print("pdf downloaded !")
         
         if format=='tab':
-            if self.size<=30 and self.size2<=30:
-                print('t-test')
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.mentLoadData[0],self.mentLoadData2[0])
-                one_tailed_p_value=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value<=alpha:
-                    res1 = 'file 2'
-                else:
-                    res1 = 'file 1'
-                ###   
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.mentLoadData[1],self.mentLoadData2[1])
-                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value2<=alpha:
-                    res2 = 'file 2'
-                else:
-                    res2 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.mentLoadData[2],self.mentLoadData2[2])
-                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value3<=alpha:
-                    res3 = 'file 2'
-                else:
-                    res3 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.mentLoadData[3],self.mentLoadData2[3])
-                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value4<=alpha:
-                    res4 = 'file 2'
-                else:
-                    res4 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.mentLoadData[4],self.mentLoadData2[4])
-                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value5<=alpha:
-                    res5 = 'file 2'
-                else:
-                    res5 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.mentLoadData[5],self.mentLoadData2[5])
-                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value6<=alpha:
-                    res6 = 'file 2'
-                else:
-                    res6 = 'file 1'
-                ###
-                d = {'categories': ['Mentally demanding', 'Physicaly demanding', 'Hurried or rushed pace','difficulty', 'success', 'overall easiness to use'], 'file 1': [self.mentLoad[0][0], self.mentLoad[0][1],self.mentLoad[0][2],self.mentLoad[0][3], self.mentLoadSuccess[0][0], self.mentLoadSuccess[0][1]], 'file 2': [self.mentLoad2[0][0], self.mentLoad2[0][1],self.mentLoad2[0][2],self.mentLoad2[0][3], self.mentLoadSuccess2[0][0], self.mentLoadSuccess2[0][1]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
+            if self.size<=30 or self.size2<=30 or not self.diff_size:
+                print('type of test: t-test')
+                if self.link=='independant':
+                    print('independant')
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.mentLoadData[0],self.mentLoadData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value=p_value
+                    if one_tailed_p_value>alpha:
+                        res1 = 'no'
+                        best1 = '/'
+                    else:
+                        res1 = 'yes'
+                        if t_value>0:
+                            best1 = 'file 2'
+                        else:
+                            best1 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.mentLoadData[1],self.mentLoadData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value2=p_value
+                    if one_tailed_p_value2>alpha:
+                        res2 = 'no'
+                        best2 = '/'
+                    else:
+                        res2 = 'yes'
+                        if t_value>0:
+                            best2 = 'file 2'
+                        else:
+                            best2 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.mentLoadData[2],self.mentLoadData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value3=p_value
+                    if one_tailed_p_value3>alpha:
+                        res3 = 'no'
+                        best3 = '/'
+                    else:
+                        res3 = 'yes'
+                        if t_value>0:
+                            best3 = 'file 2'
+                        else:
+                            best3 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.mentLoadData[3],self.mentLoadData2[3], equal_var=self.diff_size)
+                    one_tailed_p_value4=p_value
+                    if one_tailed_p_value4>alpha:
+                        res4 = 'no'
+                        best4 = '/'
+                    else:
+                        res4 = 'yes'
+                        if t_value>0:
+                            best4 = 'file 2'
+                        else:
+                            best4 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.mentLoadData[4],self.mentLoadData2[4], equal_var=self.diff_size)
+                    one_tailed_p_value5=p_value
+                    if one_tailed_p_value5>alpha:
+                        res5 = 'no'
+                        best5 = '/'
+                    else:
+                        res5 = 'yes'
+                        if t_value<0:
+                            best5 = 'file 2'
+                        else:
+                            best5 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.mentLoadData[5],self.mentLoadData2[5], equal_var=self.diff_size)
+                    one_tailed_p_value6=p_value
+                    if one_tailed_p_value6>alpha:
+                        res6 = 'no'
+                        best6 = '/'
+                    else:
+                        res6 = 'yes'
+                        if t_value<0:
+                            best6 = 'file 2'
+                        else:
+                            best6 = 'file 1'
+                    ###
+                    #je veux tester si ils sont significment different et si oui si ils lequel est le meilleur
+                    d = {'categories': ['Mentally demanding', 'Physicaly demanding', 'Hurried or rushed pace','difficulty'], 'file 1': [self.mentLoad[0][0], self.mentLoad[0][1],self.mentLoad[0][2],self.mentLoad[0][3]], 'file 2': [self.mentLoad2[0][0], self.mentLoad2[0][1],self.mentLoad2[0][2],self.mentLoad2[0][3]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4], 'Significant diff': [res1, res2, res3, res4], 'Best File': [best1, best2, best3, best4]}
+                    df = pd.DataFrame(data=d)
+                    
+                    dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = [' '], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best File' ])
+                    
+                    d = {'categories': ['success', 'overall easiness to use'], 'file 1': [self.mentLoadSuccess[0][0], self.mentLoadSuccess[0][1]], 'file 2': [self.mentLoadSuccess2[0][0], self.mentLoadSuccess2[0][1]], 'p-value': [one_tailed_p_value5, one_tailed_p_value6], 'Significant diff': [res5, res6], 'Best File': [best5, best6]}
+                    df2 = pd.DataFrame(data=d)
+                    frames = [df, dfmid, df2]
+                    tab = pd.concat(frames)
+                    display (tab)
+                    
+                if self.link=='dependant':
+                    print('dependant')
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.mentLoadData[0],self.mentLoadData2[0])
+                    one_tailed_p_value=p_value/2
+                    if one_tailed_p_value>alpha:
+                        res1 = 'no'
+                        best1 = '/'
+                    else:
+                        res1 = 'yes'
+                        if t_value>0:
+                            best1 = 'file 2'
+                        else:
+                            best1 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.mentLoadData[1],self.mentLoadData2[1])
+                    one_tailed_p_value2=p_value/2
+                    if one_tailed_p_value2>alpha:
+                        res2 = 'no'
+                        best2 = '/'
+                    else:
+                        res2 = 'yes'
+                        if t_value>0:
+                            best2 = 'file 2'
+                        else:
+                            best2 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.mentLoadData[2],self.mentLoadData2[2])
+                    one_tailed_p_value3=p_value/2
+                    if one_tailed_p_value3>alpha:
+                        res3 = 'no'
+                        best3 = '/'
+                    else:
+                        res3 = 'yes'
+                        if t_value>0:
+                            best3 = 'file 2'
+                        else:
+                            best3 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.mentLoadData[3],self.mentLoadData2[3])
+                    one_tailed_p_value4=p_value/2
+                    if one_tailed_p_value4>alpha:
+                        res4 = 'no'
+                        best4 = '/'
+                    else:
+                        res4 = 'yes'
+                        if t_value>0:
+                            best4 = 'file 2'
+                        else:
+                            best4 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.mentLoadData[4],self.mentLoadData2[4])
+                    one_tailed_p_value5=p_value/2
+                    if one_tailed_p_value5>alpha:
+                        res5 = 'no'
+                        best5 = '/'
+                    else:
+                        res5 = 'yes'
+                        if t_value<0:
+                            best5 = 'file 2'
+                        else:
+                            best5 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.mentLoadData[5],self.mentLoadData2[5])
+                    one_tailed_p_value6=p_value/2
+                    if one_tailed_p_value6>alpha:
+                        res6 = 'no'
+                        best6 = '/'
+                    else:
+                        res6 = 'yes'
+                        if t_value<0:
+                            best6 = 'file 2'
+                        else:
+                            best6 = 'file 1'
+                    ###
+                    #je veux tester si ils sont significment different et si oui si ils lequel est le meilleur
+                    d = {'categories': ['Mentally demanding', 'Physicaly demanding', 'Hurried or rushed pace','difficulty'], 'file 1': [self.mentLoad[0][0], self.mentLoad[0][1],self.mentLoad[0][2],self.mentLoad[0][3]], 'file 2': [self.mentLoad2[0][0], self.mentLoad2[0][1],self.mentLoad2[0][2],self.mentLoad2[0][3]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4], 'Significant diff': [res1, res2, res3, res4], 'Best File': [best1, best2, best3, best4]}
+                    df = pd.DataFrame(data=d)
+                    
+                    dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = [' '], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best File' ])
+                    
+                    d = {'categories': ['success', 'overall easiness to use'], 'file 1': [self.mentLoadSuccess[0][0], self.mentLoadSuccess[0][1]], 'file 2': [self.mentLoadSuccess2[0][0], self.mentLoadSuccess2[0][1]], 'p-value': [one_tailed_p_value5, one_tailed_p_value6], 'Significant diff': [res5, res6], 'Best File': [best5, best6]}
+                    df2 = pd.DataFrame(data=d)
+                    frames = [df, dfmid, df2]
+                    tab = pd.concat(frames)
+                    display (tab)
+                    
+                    
             else: 
                 print("z-test")
-                
-                print("mean file 1"+str(self.mentLoad[0]))
-                print("mean file 2"+str(self.mentLoad2[0]))
-                ztest_Score, p_value= ztest(x1=self.mentLoad[0], x2=self.mentLoad2[0], alternative='larger')
-                #ztest_Score, p_value= ztest(x1=[2,3,1,2], x2=[7,9,9,8], alternative='larger')
-                print(str(p_value))
-                # the function outputs a p_value and z-score corresponding to that value, we compare the 
-                # p-value with alpha, if it is greater than alpha then we do not null hypothesis 
-                # else we reject it.
-
-                if(p_value<alpha):
-                    print("file 1 superior")
-                else:
-                    print("file 2 superior")
                     
                 ### z test 
-                ztest_Score, p_value= ztest(x1=self.mentLoadData[0], x2=self.mentLoadData2[0], alternative='larger')
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[0], x2=self.mentLoadData2[0])
                 one_tailed_p_value=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value>=alpha:
-                    res1 = 'file 2'
+                if one_tailed_p_value>alpha:
+                    res1 = 'no'
+                    best1 = '/'
                 else:
-                    res1 = 'file 1'
+                    res1 = 'yes'
+                    if ztest_Score>0:
+                        best1 = 'file 2'
+                    else:
+                        best1 = 'file 1'
                 ###   
                 ### z test 
-                ztest_Score, p_value= ztest(x1=self.mentLoadData[1], x2=self.mentLoadData2[1], alternative='larger')
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[1], x2=self.mentLoadData2[1])
                 one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value2>=alpha:
-                    res2 = 'file 2'
+                t_value,p_value=stats.ttest_rel(self.mentLoadData[1],self.mentLoadData2[1])
+                one_tailed_p_value2=p_value/2
+                if one_tailed_p_value2>alpha:
+                    res2 = 'no'
+                    best2 = '/'
                 else:
-                    res2 = 'file 1'
+                    res2 = 'yes'
+                    if ztest_Score>0:
+                        best2 = 'file 2'
+                    else:
+                        best2 = 'file 1'
                 ###
                 ### z test 
-                ztest_Score, p_value= ztest(x1=self.mentLoadData[2], x2=self.mentLoadData2[2], alternative='larger')
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[2], x2=self.mentLoadData2[2])
                 one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value3>=alpha:
-                    res3 = 'file 2'
+                if one_tailed_p_value3>alpha:
+                    res3 = 'no'
+                    best3 = '/'
                 else:
-                    res3 = 'file 1'
+                    res3 = 'yes'
+                    if ztest_Score>0:
+                        best3 = 'file 2'
+                    else:
+                        best3 = 'file 1'
                 ###
                 ### z test 
-                ztest_Score, p_value= ztest(x1=self.mentLoadData[3], x2=self.mentLoadData2[3], alternative='larger')
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[3], x2=self.mentLoadData2[3])
                 one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value4>=alpha:
-                    res4 = 'file 2'
+                if one_tailed_p_value4>alpha:
+                    res4 = 'no'
+                    best4 = '/'
                 else:
-                    res4 = 'file 1'
+                    res4 = 'yes'
+                    if ztest_Score>0:
+                        best4 = 'file 2'
+                    else:
+                        best4 = 'file 1'
+
+                    
                 ###
                 ### z test 
-                ztest_Score, p_value= ztest(x1=self.mentLoadData[4], x2=self.mentLoadData2[4], alternative='larger')
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[4], x2=self.mentLoadData2[4])
                 one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value5>=alpha:
-                    res5 = 'file 2'
+                if one_tailed_p_value5>alpha:
+                    res5 = 'no'
+                    best5 = '/'
                 else:
-                    res5 = 'file 1'
+                    res5 = 'yes'
+                    if ztest_Score<0:
+                        best5 = 'file 2'
+                    else:
+                        best5 = 'file 1'
                 ###
                 ### z test 
-                ztest_Score, p_value= ztest(x1=self.mentLoadData[5], x2=self.mentLoadData2[5], alternative='larger')
+                ztest_Score, p_value= ztest(x1=self.mentLoadData[5], x2=self.mentLoadData2[5])
                 one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value6>=alpha:
-                    res6 = 'file 2'
+                if one_tailed_p_value6>alpha:
+                    res6 = 'no'
+                    best6 = '/'
                 else:
-                    res6 = 'file 1'
+                    res6 = 'yes'
+                    if ztest_Score<0:
+                        best6 = 'file 2'
+                    else:
+                        best6 = 'file 1'
                 ###
-                d = {'categories': ['Mentally demanding', 'Physicaly demanding', 'Hurried or rushed pace','difficulty', 'success', 'overall easiness to use'], 'file 1': [self.mentLoad[0][0], self.mentLoad[0][1],self.mentLoad[0][2],self.mentLoad[0][3], self.mentLoadSuccess[0][0], self.mentLoadSuccess[0][1]], 'file 2': [self.mentLoad2[0][0], self.mentLoad2[0][1],self.mentLoad2[0][2],self.mentLoad2[0][3], self.mentLoadSuccess2[0][0], self.mentLoadSuccess2[0][1]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
-                tab = pd.DataFrame(data=d)
+                d = {'categories': ['Mentally demanding', 'Physicaly demanding', 'Hurried or rushed pace','difficulty'], 'file 1': [self.mentLoad[0][0], self.mentLoad[0][1],self.mentLoad[0][2],self.mentLoad[0][3]], 'file 2': [self.mentLoad2[0][0], self.mentLoad2[0][1],self.mentLoad2[0][2],self.mentLoad2[0][3]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4], 'Significant diff': [res1, res2, res3, res4], 'Best File': [best1, best2, best3, best4]}
+                df = pd.DataFrame(data=d)
+
+                dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = [' '], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best File' ])
+
+                d = {'categories': ['success', 'overall easiness to use'], 'file 1': [self.mentLoadSuccess[0][0], self.mentLoadSuccess[0][1]], 'file 2': [self.mentLoadSuccess2[0][0], self.mentLoadSuccess2[0][1]], 'p-value': [one_tailed_p_value5, one_tailed_p_value6], 'Significant diff': [res5, res6], 'Best File': [best5, best6]}
+                df2 = pd.DataFrame(data=d)
+                frames = [df, dfmid, df2]
+                tab = pd.concat(frames)
                 display (tab)
-                
-                # ztest ,propability_value = stests.ztest(x1=self.mentLoad[0], x2=self.mentLoad2[0], value=146)
-                # print(float(propability_value))
-                # if propability_value<0.05:
-                #     print("Null hyphothesis rejected , Alternative hyphothesis accepted")
-                # else:
-                #     print("Null hyphothesis accepted , Alternative hyphothesis rejected")
 
             #pdf download
             if save=='pdf':
                 print("loading pdf...")
                 path=str(os.path.join(Path.home(), "Downloads", "Cognitive_Load.pdf"))
-                fig.savefig(path,  bbox_inches='tight')
+                pathAct = str(os.path.join(Path().absolute(), "excDoc", "Cognitive_Load.pdf"))    
+                dfi.export(tab, pathAct)
+                doc = aw.Document()
+                builder = aw.DocumentBuilder(doc)
+                builder.insert_image(pathAct)
+                doc.save(path)
                 print("pdf downloaded !")
     
     
@@ -1159,18 +1331,7 @@ class ComparedDataFile():
         fig.subplots_adjust(bottom=4, top=8)
         frames = [colMil,df,colMil2, df2]
         result = pd.concat(frames)
-            
-#         result = result.style.set_table_styles([
-#                             {
-#                                 "selector":"thead",
-#                                 "props": [("background-color", "gray"),
-#                                         ]
-#                             },
 
-#                         ])
-            
-            
-#         display (result)
 
         #pdf download
         if format=='pdf':
@@ -1255,6 +1416,9 @@ class ComparedDataFile():
     #Software Usability
     def Software_Usability(self, format,save='notActivated', alpha=0.05):
         
+        if type(save) != str:alpha=save
+        
+        print("level of significance: "+str(alpha))
         if format=='graph':
             plt.rcParams["figure.figsize"] = (16,8)
             fig= plt.figure()
@@ -1483,251 +1647,623 @@ class ComparedDataFile():
                 print("pdf downloaded !")
         
         if format=='tab':
-            if self.size<=30 and self.size<=30:
-                print("t test")
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[0],self.softUsInterSysData2[0])
-                one_tailed_p_value=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value<=alpha:
-                    res1 = 'file 2'
-                else:
-                    res1 = 'file 1'
-                ###   
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[1],self.softUsInterSysData2[1])
-                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value2<=alpha:
-                    res2 = 'file 2'
-                else:
-                    res2 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[2],self.softUsInterSysData2[2])
-                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value3<=alpha:
-                    res3 = 'file 2'
-                else:
-                    res3 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[3],self.softUsInterSysData2[3])
-                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value4<=alpha:
-                    res4 = 'file 2'
-                else:
-                    res4 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[4],self.softUsInterSysData2[4])
-                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value5<=alpha:
-                    res5 = 'file 2'
-                else:
-                    res5 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterSysData[5],self.softUsInterSysData2[5])
-                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value6<=alpha:
-                    res6 = 'file 2'
-                else:
-                    res6 = 'file 1'
-                ###
-                #######################################################################################################################################
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInfoData[0],self.softUsInfoData2[0])
-                one_tailed_p_value7=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value7<=alpha:
-                    res7 = 'file 2'
-                else:
-                    res7 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInfoData[1],self.softUsInfoData2[1])
-                one_tailed_p_value8=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value8<=alpha:
-                    res8 = 'file 2'
-                else:
-                    res8 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInfoData[2],self.softUsInfoData2[2])
-                one_tailed_p_value9=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value9<=alpha:
-                    res9 = 'file 2'
-                else:
-                    res9 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInfoData[3],self.softUsInfoData2[3])
-                one_tailed_p_value0=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value0<=alpha:
-                    res0 = 'file 2'
-                else:
-                    res0 = 'file 1'
-                ###
-                #################################################################################################################################
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[0],self.softUsInterfaceData2[0])
-                one_tailed_p_value11=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value11<=alpha:
-                    res11 = 'file 2'
-                else:
-                    res11 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[1],self.softUsInterfaceData2[1])
-                one_tailed_p_value12=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value12<=alpha:
-                    res12 = 'file 2'
-                else:
-                    res12 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[2],self.softUsInterfaceData2[2])
-                one_tailed_p_value13=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value13<=alpha:
-                    res13 = 'file 2'
-                else:
-                    res13 = 'file 1'
-                ###
-                d = {'categories': ['Simplicity to use', 'helped effectivness of my work', 'helped pace of my work','confortable system', 'easy recovery after mistake', 'overall satisfaction'], 'file 1': [self.softUs[0][0], self.softUs[0][1],self.softUs[0][2], self.softUs[0][3], self.softUs[0][4], self.softUs[0][5]], 'file 2': [self.softUs2[0][0], self.softUs2[0][1],self.softUs2[0][2], self.softUs2[0][3], self.softUs2[0][4], self.softUs2[0][5]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
-
-                d = {'categories': ['clear', 'easy to find', 'effective','organized'], 'file 1': [self.softUsInfo[0][0], self.softUsInfo[0][1],self.softUsInfo[0][2], self.softUsInfo[0][3]], 'file 2': [self.softUsInfo2[0][0], self.softUsInfo2[0][1],self.softUsInfo2[0][2], self.softUsInfo2[0][3]], 'p-value': [one_tailed_p_value7, one_tailed_p_value8, one_tailed_p_value9, one_tailed_p_value0], 'Best file': [res7, res8, res9, res0]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
-
-                d = {'categories': ['pleasant', 'I like using the interface', 'has all the functions and capabilities excpeted'], 'file 1': [self.softUsInterface[0][0], self.softUsInterface[0][1],self.softUsInterface[0][2]], 'file 2': [self.softUsInterface2[0][0], self.softUsInterface2[0][1],self.softUsInterface2[0][2]], 'p-value': [one_tailed_p_value11, one_tailed_p_value12, one_tailed_p_value13], 'Best file': [res11, res12, res13]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
-
-                if save=='pdf':
-                    print("loading pdf...")
-                    path=str(os.path.join(Path.home(), "Downloads", "Software_Usability.pdf"))
-                    fig.savefig(path,  bbox_inches='tight')
-                    print("pdf downloaded !")
+            if self.size<=30 or self.size2<=30 or not self.diff_size:
+                print('type of test: t-test')
+                print("problem= i'm only testing if the difference is existent + success and overall different")
+                if self.link=='independant':
+                    print('independant')
                     
-            else:
+                    #####################################################################################################################"
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInterSysData[0],self.softUsInterSysData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value=p_value
+                    if one_tailed_p_value>alpha:
+                        res1 = 'no'
+                        best1 = '/'
+                    else:
+                        res1 = 'yes'
+                        if t_value<0:
+                            best1 = 'file 2'
+                        else:
+                            best1 = 'file 1'
+                    ###   
+                    ### t test 
+                    total=0
+                    t_value,p_value=stats.ttest_ind(self.softUsInterSysData[1],self.softUsInterSysData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value2=p_value
+                    if one_tailed_p_value2>alpha:
+                        res2 = 'no'
+                        best2 = '/'
+                    else:
+                        res2 = 'yes'
+                        if t_value<0:
+                            best2 = 'file 2'
+                        else:
+                            best2 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInterSysData[2],self.softUsInterSysData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value3=p_value
+                    if one_tailed_p_value3>alpha:
+                        res3 = 'no'
+                        best3 = '/'
+                    else:
+                        res3 = 'yes'
+                        if t_value<0:
+                            best3 = 'file 2'
+                        else:
+                            best3 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInterSysData[3],self.softUsInterSysData2[3], equal_var=self.diff_size)
+                    one_tailed_p_value4=p_value
+                    if one_tailed_p_value4>alpha:
+                        res4 = 'no'
+                        best4 = '/'
+                    else:
+                        res4 = 'yes'
+                        if t_value<0:
+                            best4 = 'file 2'
+                        else:
+                            best4 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInterSysData[4],self.softUsInterSysData2[4], equal_var=self.diff_size)
+                    one_tailed_p_value5=p_value
+                    if one_tailed_p_value5>alpha:
+                        res5 = 'no'
+                        best5 = '/'
+                    else:
+                        res5 = 'yes'
+                        if t_value<0:
+                            best5 = 'file 2'
+                        else:
+                            best5 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInterSysData[5],self.softUsInterSysData2[5], equal_var=self.diff_size)
+                    one_tailed_p_value6=p_value
+                    if one_tailed_p_value6>alpha:
+                        res6 = 'no'
+                        best6 = '/'
+                    else:
+                        res6 = 'yes'
+                        if t_value<0:
+                            best6 = 'file 2'
+                        else:
+                            best6 = 'file 1'
+                    ###
+                    ################################################################################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInfoData[0],self.softUsInfoData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value7=p_value
+                    if one_tailed_p_value7>alpha:
+                        res7 = 'no'
+                        best7 = '/'
+                    else:
+                        res7 = 'yes'
+                        if t_value<0:
+                            best7 = 'file 2'
+                        else:
+                            best7 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInfoData[1],self.softUsInfoData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value8=p_value
+                    if one_tailed_p_value8>alpha:
+                        res8 = 'no'
+                        best8 = '/'
+                    else:
+                        res8 = 'yes'
+                        if t_value<0:
+                            best8 = 'file 2'
+                        else:
+                            best8 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInfoData[2],self.softUsInfoData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value9=p_value
+                    if one_tailed_p_value9>alpha:
+                        res9 = 'no'
+                        best9 = '/'
+                    else:
+                        res9 = 'yes'
+                        if t_value<0:
+                            best9 = 'file 2'
+                        else:
+                            best9 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInfoData[3],self.softUsInfoData2[3], equal_var=self.diff_size)
+                    one_tailed_p_value0=p_value
+                    if one_tailed_p_value0>alpha:
+                        res0 = 'no'
+                        best0 = '/'
+                    else:
+                        res0 = 'yes'
+                        if t_value<0:
+                            best0 = 'file 2'
+                        else:
+                            best0 = 'file 1'
+                    ###
+                    ##############################################################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInterfaceData[0],self.softUsInterfaceData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value11=p_value
+                    if one_tailed_p_value11>alpha:
+                        res11 = 'no'
+                        best11 = '/'
+                    else:
+                        res11 = 'yes'
+                        if t_value<0:
+                            best11 = 'file 2'
+                        else:
+                            best11 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInterfaceData[1],self.softUsInterfaceData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value12=p_value
+                    if one_tailed_p_value12>alpha:
+                        res12 = 'no'
+                        best12 = '/'
+                    else:
+                        res12 = 'yes'
+                        if t_value<0:
+                            best12 = 'file 2'
+                        else:
+                            best12 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.softUsInterfaceData[2],self.softUsInterfaceData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value13=p_value
+                    if one_tailed_p_value13>alpha:
+                        res13 = 'no'
+                        best13 = '/'
+                    else:
+                        res13 = 'yes'
+                        if t_value<0:
+                            best13 = 'file 2'
+                        else:
+                            best13 = 'file 1'
+                    ###
+                    #################################################################################################################################
+                
+                    dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['System'], columns =['categories', 'file 1', 'file 2','p-value','Significant diff', 'Best file' ])
+                    d = {'categories': ['Simplicity to use', 'helped effectivness of my work', 'helped pace of my work','confortable system', 'easy recovery after mistake', 'overall satisfaction'], 'file 1': [self.softUs[0][0], self.softUs[0][1],self.softUs[0][2], self.softUs[0][3], self.softUs[0][4], self.softUs[0][5]], 'file 2': [self.softUs2[0][0], self.softUs2[0][1],self.softUs2[0][2], self.softUs2[0][3], self.softUs2[0][4], self.softUs2[0][5]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Significant diff': [res1, res2, res3, res4, res5, res6], 'Best file': [best1, best2, best3, best4, best5, best6]}
+
+                    df = pd.DataFrame(data=d)
+
+
+                    dfmid2 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Information'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff','Best file' ])
+                    d = {'categories': ['clear', 'easy to find', 'effective','organized'], 'file 1': [self.softUsInfo[0][0], self.softUsInfo[0][1],self.softUsInfo[0][2], self.softUsInfo[0][3]], 'file 2': [self.softUsInfo2[0][0], self.softUsInfo2[0][1],self.softUsInfo2[0][2], self.softUsInfo2[0][3]], 'p-value': [one_tailed_p_value7, one_tailed_p_value8, one_tailed_p_value9, one_tailed_p_value0],'Significant diff': [res7, res8, res9, res0], 'Best file': [best7, best8, best9, best0]}
+
+                    df1 = pd.DataFrame(data=d)
+
+
+                    dfmid3 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Interface'], columns =['categories', 'file 1', 'file 2','p-value','Significant diff', 'Best file' ])
+                    d = {'categories': ['pleasant', 'I like using the interface', 'has all the functions and capabilities excpeted'], 'file 1': [self.softUsInterface[0][0], self.softUsInterface[0][1],self.softUsInterface[0][2]], 'file 2': [self.softUsInterface2[0][0], self.softUsInterface2[0][1],self.softUsInterface2[0][2]], 'p-value': [one_tailed_p_value11, one_tailed_p_value12, one_tailed_p_value13], 'Significant diff': [res11, res12, res13], 'Best file': [best11, best12, best13]}
+
+                    df2 = pd.DataFrame(data=d)
+                    frames = [dfmid, df, dfmid2,df1, dfmid3, df2]
+                    tab = pd.concat(frames)
+                    display(tab)
+
+                if self.link=='dependant':
+                    print('dependant')
+                    #####################################################################################################################"
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterSysData[0],self.softUsInterSysData2[0])
+                    one_tailed_p_value=p_value/2
+                    if one_tailed_p_value>alpha:
+                        res1 = 'no'
+                        best1 = '/'
+                    else:
+                        res1 = 'yes'
+                        if t_value<0:
+                            best1 = 'file 2'
+                        else:
+                            best1 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterSysData[1],self.softUsInterSysData2[1])
+                    one_tailed_p_value2=p_value/2
+                    if one_tailed_p_value2>alpha:
+                        res2 = 'no'
+                        best2 = '/'
+                    else:
+                        res2 = 'yes'
+                        if t_value<0:
+                            best2 = 'file 2'
+                        else:
+                            best2 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterSysData[2],self.softUsInterSysData2[2])
+                    one_tailed_p_value3=p_value/2
+                    if one_tailed_p_value3>alpha:
+                        res3 = 'no'
+                        best3 = '/'
+                    else:
+                        res3 = 'yes'
+                        if t_value<0:
+                            best3 = 'file 2'
+                        else:
+                            best3 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterSysData[3],self.softUsInterSysData2[3])
+                    one_tailed_p_value4=p_value/2
+                    if one_tailed_p_value4>alpha:
+                        res4 = 'no'
+                        best4 = '/'
+                    else:
+                        res4 = 'yes'
+                        if t_value<0:
+                            best4 = 'file 2'
+                        else:
+                            best4 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterSysData[4],self.softUsInterSysData2[4])
+                    one_tailed_p_value5=p_value/2
+                    if one_tailed_p_value5>alpha:
+                        res5 = 'no'
+                        best5 = '/'
+                    else:
+                        res5 = 'yes'
+                        if t_value<0:
+                            best5 = 'file 2'
+                        else:
+                            best5 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterSysData[5],self.softUsInterSysData2[5])
+                    one_tailed_p_value6=p_value/2
+                    if one_tailed_p_value6>alpha:
+                        res6 = 'no'
+                        best6 = '/'
+                    else:
+                        res6 = 'yes'
+                        if t_value<0:
+                            best6 = 'file 2'
+                        else:
+                            best6 = 'file 1'
+                    ###
+                    ################################################################################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInfoData[0],self.softUsInfoData2[0])
+                    one_tailed_p_value7=p_value/2
+                    if one_tailed_p_value7>alpha:
+                        res7 = 'no'
+                        best7 = '/'
+                    else:
+                        res7 = 'yes'
+                        if t_value<0:
+                            best7 = 'file 2'
+                        else:
+                            best7 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInfoData[1],self.softUsInfoData2[1])
+                    one_tailed_p_value8=p_value/2
+                    if one_tailed_p_value8>alpha:
+                        res8 = 'no'
+                        best8 = '/'
+                    else:
+                        res8 = 'yes'
+                        if t_value<0:
+                            best8 = 'file 2'
+                        else:
+                            best8 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInfoData[2],self.softUsInfoData2[2])
+                    one_tailed_p_value9=p_value/2
+                    if one_tailed_p_value9>alpha:
+                        res9 = 'no'
+                        best9 = '/'
+                    else:
+                        res9 = 'yes'
+                        if t_value<0:
+                            best9 = 'file 2'
+                        else:
+                            best9 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInfoData[3],self.softUsInfoData2[3])
+                    one_tailed_p_value0=p_value/2
+                    if one_tailed_p_value0>alpha:
+                        res0 = 'no'
+                        best0 = '/'
+                    else:
+                        res0 = 'yes'
+                        if t_value<0:
+                            best0 = 'file 2'
+                        else:
+                            best0 = 'file 1'
+                    ###
+                    ##############################################################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[0],self.softUsInterfaceData2[0])
+                    one_tailed_p_value11=p_value/2
+                    if one_tailed_p_value11>alpha:
+                        res11 = 'no'
+                        best11 = '/'
+                    else:
+                        res11 = 'yes'
+                        if t_value<0:
+                            best11 = 'file 2'
+                        else:
+                            best11 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[1],self.softUsInterfaceData2[1])
+                    one_tailed_p_value12=p_value/2
+                    if one_tailed_p_value12>alpha:
+                        res12 = 'no'
+                        best12 = '/'
+                    else:
+                        res12 = 'yes'
+                        if t_value<0:
+                            best12 = 'file 2'
+                        else:
+                            best12 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.softUsInterfaceData[2],self.softUsInterfaceData2[2])
+                    one_tailed_p_value13=p_value/2
+                    if one_tailed_p_value13>alpha:
+                        res13 = 'no'
+                        best13 = '/'
+                    else:
+                        res13 = 'yes'
+                        if t_value<0:
+                            best13 = 'file 2'
+                        else:
+                            best13 = 'file 1'
+                    ###
+                    #################################################################################################################################
+                
+                    dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['System'], columns =['categories', 'file 1', 'file 2','p-value','Significant diff', 'Best file' ])
+                    d = {'categories': ['Simplicity to use', 'helped effectivness of my work', 'helped pace of my work','confortable system', 'easy recovery after mistake', 'overall satisfaction'], 'file 1': [self.softUs[0][0], self.softUs[0][1],self.softUs[0][2], self.softUs[0][3], self.softUs[0][4], self.softUs[0][5]], 'file 2': [self.softUs2[0][0], self.softUs2[0][1],self.softUs2[0][2], self.softUs2[0][3], self.softUs2[0][4], self.softUs2[0][5]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Significant diff': [res1, res2, res3, res4, res5, res6], 'Best file': [best1, best2, best3, best4, best5, best6]}
+
+                    df = pd.DataFrame(data=d)
+
+
+                    dfmid2 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Information'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                    d = {'categories': ['clear', 'easy to find', 'effective','organized'], 'file 1': [self.softUsInfo[0][0], self.softUsInfo[0][1],self.softUsInfo[0][2], self.softUsInfo[0][3]], 'file 2': [self.softUsInfo2[0][0], self.softUsInfo2[0][1],self.softUsInfo2[0][2], self.softUsInfo2[0][3]], 'p-value': [one_tailed_p_value7, one_tailed_p_value8, one_tailed_p_value9, one_tailed_p_value0],'Significant diff': [res7, res8, res9, res0], 'Best file': [best7, best8, best9, best0]}
+
+                    df1 = pd.DataFrame(data=d)
+
+
+                    dfmid3 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Interface'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                    d = {'categories': ['pleasant', 'I like using the interface', 'has all the functions and capabilities excpeted'], 'file 1': [self.softUsInterface[0][0], self.softUsInterface[0][1],self.softUsInterface[0][2]], 'file 2': [self.softUsInterface2[0][0], self.softUsInterface2[0][1],self.softUsInterface2[0][2]], 'p-value': [one_tailed_p_value11, one_tailed_p_value12, one_tailed_p_value13], 'Significant diff': [res11, res12, res13], 'Best file': [best11, best12, best13]} 
+
+                    df2 = pd.DataFrame(data=d)
+                    frames = [dfmid, df, dfmid2,df1, dfmid3, df2]
+                    tab = pd.concat(frames)
+                    display(tab)      
+            else: 
                 print("z-test")
+                
+                
+                #####################################################################################################################"
                 ### z test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[0], x2=self.softUsInterSysData2[0], alternative='larger')
-                one_tailed_p_value=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value>=alpha:
-                    res1 = 'file 2'
+                ztest_Score, p_value= ztest(self.softUsInterSysData[0],self.softUsInterSysData2[0], equal_var=self.diff_size)
+                one_tailed_p_value=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value>alpha:
+                    res1 = 'no'
+                    best1 = '/'
                 else:
-                    res1 = 'file 1'
+                    res1 = 'yes'
+                    if ztest_Score<0:
+                        best1 = 'file 2'
+                    else:
+                        best1 = 'file 1'
                 ###   
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[1], x2=self.softUsInterSysData2[1], alternative='larger')
-                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value2>=alpha:
-                    res2 = 'file 2'
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInterSysData[1],self.softUsInterSysData2[1], equal_var=self.diff_size)
+                one_tailed_p_value2=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value2>alpha:
+                    res2 = 'no'
+                    best2 = '/'
                 else:
-                    res2 = 'file 1'
+                    res2 = 'yes'
+                    if ztest_Score<0:
+                        best2 = 'file 2'
+                    else:
+                        best2 = 'file 1'
                 ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[2], x2=self.softUsInterSysData2[2], alternative='larger')
-                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value3>=alpha:
-                    res3 = 'file 2'
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInterSysData[2],self.softUsInterSysData2[2], equal_var=self.diff_size)
+                one_tailed_p_value3=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value3>alpha:
+                    res3 = 'no'
+                    best3 = '/'
                 else:
-                    res3 = 'file 1'
+                    res3 = 'yes'
+                    if ztest_Score<0:
+                        best3 = 'file 2'
+                    else:
+                        best3 = 'file 1'
                 ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[3], x2=self.softUsInterSysData2[3], alternative='larger')
-                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value4>=alpha:
-                    res4 = 'file 2'
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInterSysData[3],self.softUsInterSysData2[3], equal_var=self.diff_size)
+                one_tailed_p_value4=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value4>alpha:
+                    res4 = 'no'
+                    best4 = '/'
                 else:
-                    res4 = 'file 1'
+                    res4 = 'yes'
+                    if ztest_Score<0:
+                        best4 = 'file 2'
+                    else:
+                        best4 = 'file 1'
                 ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[4], x2=self.softUsInterSysData2[4], alternative='larger')
-                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value5>=alpha:
-                    res5 = 'file 2'
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInterSysData[4],self.softUsInterSysData2[4], equal_var=self.diff_size)
+                one_tailed_p_value5=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value5>alpha:
+                    res5 = 'no'
+                    best5 = '/'
                 else:
-                    res5 = 'file 1'
+                    res5 = 'yes'
+                    if ztest_Score<0:
+                        best5 = 'file 2'
+                    else:
+                        best5 = 'file 1'
                 ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterSysData[5], x2=self.softUsInterSysData2[5], alternative='larger')
-                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value6>=alpha:
-                    res6 = 'file 2'
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInterSysData[5],self.softUsInterSysData2[5], equal_var=self.diff_size)
+                one_tailed_p_value6=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value6>alpha:
+                    res6 = 'no'
+                    best6 = '/'
                 else:
-                    res6 = 'file 1'
+                    res6 = 'yes'
+                    if ztest_Score<0:
+                        best6 = 'file 2'
+                    else:
+                        best6 = 'file 1'
                 ###
-                #######################################################################################################################################
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInfoData[0], x2=self.softUsInfoData2[0], alternative='larger')
-                one_tailed_p_value7=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value7>=alpha:
-                    res7 = 'file 2'
+                ################################################################################################################################################
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInfoData[0],self.softUsInfoData2[0], equal_var=self.diff_size)
+                one_tailed_p_value7=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value7>alpha:
+                    res7 = 'no'
+                    best7 = '/'
                 else:
-                    res7 = 'file 1'
+                    res7 = 'yes'
+                    if ztest_Score<0:
+                        best7 = 'file 2'
+                    else:
+                        best7 = 'file 1'
+                ###   
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInfoData[1],self.softUsInfoData2[1], equal_var=self.diff_size)
+                one_tailed_p_value8=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value8>alpha:
+                    res8 = 'no'
+                    best8 = '/'
+                else:
+                    res8 = 'yes'
+                    if ztest_Score<0:
+                        best8 = 'file 2'
+                    else:
+                        best8 = 'file 1'
                 ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInfoData[1], x2=self.softUsInfoData2[1], alternative='larger')
-                one_tailed_p_value8=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value8>=alpha:
-                    res8 = 'file 2'
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInfoData[2],self.softUsInfoData2[2], equal_var=self.diff_size)
+                one_tailed_p_value9=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value9>alpha:
+                    res9 = 'no'
+                    best9 = '/'
                 else:
-                    res8 = 'file 1'
+                    res9 = 'yes'
+                    if ztest_Score<0:
+                        best9 = 'file 2'
+                    else:
+                        best9 = 'file 1'
                 ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInfoData[2], x2=self.softUsInfoData2[2], alternative='larger')
-                one_tailed_p_value9=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value9>=alpha:
-                    res9 = 'file 2'
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInfoData[3],self.softUsInfoData2[3], equal_var=self.diff_size)
+                one_tailed_p_value0=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value0>alpha:
+                    res0 = 'no'
+                    best0 = '/'
                 else:
-                    res9 = 'file 1'
+                    res0 = 'yes'
+                    if ztest_Score<0:
+                        best0 = 'file 2'
+                    else:
+                        best0 = 'file 1'
                 ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInfoData[3], x2=self.softUsInfoData2[3], alternative='larger')
-                one_tailed_p_value0=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value0>=alpha:
-                    res0 = 'file 2'
+                ##############################################################################################################################
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInterfaceData[0],self.softUsInterfaceData2[0], equal_var=self.diff_size)
+                one_tailed_p_value11=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value11>alpha:
+                    res11 = 'no'
+                    best11 = '/'
                 else:
-                    res0 = 'file 1'
+                    res11 = 'yes'
+                    if ztest_Score<0:
+                        best11 = 'file 2'
+                    else:
+                        best11 = 'file 1'
+                ###   
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInterfaceData[1],self.softUsInterfaceData2[1], equal_var=self.diff_size)
+                one_tailed_p_value12=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value12>alpha:
+                    res12 = 'no'
+                    best12 = '/'
+                else:
+                    res12 = 'yes'
+                    if ztest_Score<0:
+                        best12 = 'file 2'
+                    else:
+                        best12 = 'file 1'
+                ###
+                ### z test 
+                ztest_Score, p_value= ztest(self.softUsInterfaceData[2],self.softUsInterfaceData2[2], equal_var=self.diff_size)
+                one_tailed_p_value13=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value13>alpha:
+                    res13 = 'no'
+                    best13 = '/'
+                else:
+                    res13 = 'yes'
+                    if ztest_Score<0:
+                        best13 = 'file 2'
+                    else:
+                        best13 = 'file 1'
                 ###
                 #################################################################################################################################
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterfaceData[0], x2=self.softUsInterfaceData2[0], alternative='larger')
-                one_tailed_p_value11=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value11>=alpha:
-                    res11 = 'file 2'
-                else:
-                    res11 = 'file 1'
-                ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterfaceData[1], x2=self.softUsInterfaceData2[1], alternative='larger')
-                one_tailed_p_value12=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value12>=alpha:
-                    res12 = 'file 2'
-                else:
-                    res12 = 'file 1'
-                ###
-                ### t test 
-                ztest_Score, p_value= ztest(x1=self.softUsInterfaceData[2], x2=self.softUsInterfaceData2[2], alternative='larger')
-                one_tailed_p_value13=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value13>=alpha:
-                    res13 = 'file 2'
-                else:
-                    res13 = 'file 1'
-                ###
-                d = {'categories': ['Simplicity to use', 'helped effectivness of my work', 'helped pace of my work','confortable system', 'easy recovery after mistake', 'overall satisfaction'], 'file 1': [self.softUs[0][0], self.softUs[0][1],self.softUs[0][2], self.softUs[0][3], self.softUs[0][4], self.softUs[0][5]], 'file 2': [self.softUs2[0][0], self.softUs2[0][1],self.softUs2[0][2], self.softUs2[0][3], self.softUs2[0][4], self.softUs2[0][5]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Best file': [res1, res2, res3, res4, res5, res6]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
 
-                d = {'categories': ['clear', 'easy to find', 'effective','organized'], 'file 1': [self.softUsInfo[0][0], self.softUsInfo[0][1],self.softUsInfo[0][2], self.softUsInfo[0][3]], 'file 2': [self.softUsInfo2[0][0], self.softUsInfo2[0][1],self.softUsInfo2[0][2], self.softUsInfo2[0][3]], 'p-value': [one_tailed_p_value7, one_tailed_p_value8, one_tailed_p_value9, one_tailed_p_value0], 'Best file': [res7, res8, res9, res0]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
+                dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['System'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                d = {'categories': ['Simplicity to use', 'helped effectivness of my work', 'helped pace of my work','confortable system', 'easy recovery after mistake', 'overall satisfaction'], 'file 1': [self.softUs[0][0], self.softUs[0][1],self.softUs[0][2], self.softUs[0][3], self.softUs[0][4], self.softUs[0][5]], 'file 2': [self.softUs2[0][0], self.softUs2[0][1],self.softUs2[0][2], self.softUs2[0][3], self.softUs2[0][4], self.softUs2[0][5]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3, one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6], 'Significant diff': [res1, res2, res3, res4, res5, res6], 'Best file': [best1, best2, best3, best4, best5, best6]}
 
-                d = {'categories': ['pleasant', 'I like using the interface', 'has all the functions and capabilities excpeted'], 'file 1': [self.softUsInterface[0][0], self.softUsInterface[0][1],self.softUsInterface[0][2]], 'file 2': [self.softUsInterface2[0][0], self.softUsInterface2[0][1],self.softUsInterface2[0][2]], 'p-value': [one_tailed_p_value11, one_tailed_p_value12, one_tailed_p_value13], 'Best file': [res11, res12, res13]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
+                df = pd.DataFrame(data=d)
+
+
+                dfmid2 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Information'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                d = {'categories': ['clear', 'easy to find', 'effective','organized'], 'file 1': [self.softUsInfo[0][0], self.softUsInfo[0][1],self.softUsInfo[0][2], self.softUsInfo[0][3]], 'file 2': [self.softUsInfo2[0][0], self.softUsInfo2[0][1],self.softUsInfo2[0][2], self.softUsInfo2[0][3]], 'p-value': [one_tailed_p_value7, one_tailed_p_value8, one_tailed_p_value9, one_tailed_p_value0],'Significant diff': [res7, res8, res9, res0], 'Best file': [best7, best8, best9, best0]}
+
+                df1 = pd.DataFrame(data=d)
+
+
+                dfmid3 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Interface'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                d = {'categories': ['pleasant', 'I like using the interface', 'has all the functions and capabilities excpeted'], 'file 1': [self.softUsInterface[0][0], self.softUsInterface[0][1],self.softUsInterface[0][2]], 'file 2': [self.softUsInterface2[0][0], self.softUsInterface2[0][1],self.softUsInterface2[0][2]], 'p-value': [one_tailed_p_value11, one_tailed_p_value12, one_tailed_p_value13], 'Significant diff': [res11, res12, res13], 'Best file': [best11, best12, best13]}
+
+                df2 = pd.DataFrame(data=d)
+                frames = [dfmid, df, dfmid2,df1, dfmid3, df2]
+                tab = pd.concat(frames)
+                display(tab)
+            #pdf
+            if save=='pdf':
+                print("loading pdf...")
+                path=str(os.path.join(Path.home(), "Downloads", "Software_Usability.pdf"))
+                pathAct = str(os.path.join(Path().absolute(), "excDoc", "Software_Usability.pdf"))    
+                dfi.export(tab, pathAct)
+                doc = aw.Document()
+                builder = aw.DocumentBuilder(doc)
+                builder.insert_image(pathAct)
+                doc.save(path)
+                print("pdf downloaded !")
 
                 
             
@@ -1969,34 +2505,36 @@ class ComparedDataFile():
             
             coments = list(zip(self.com1[1],self.com1[2], self.com1[3]))
             df = pd.DataFrame(coments, index =self.com1[0],columns =['System: If it was difficult to recover from any mistake, please comment on the problems.', 'Information:if any information was not clear, what difficulties did you face?', 'What functions and capabilities would you like to see in this system?'])
-        
-            df = df.style.format(na_rep='No Coments').set_table_styles([
-                                {
-                                    "selector":"thead",
-                                    "props": [("background-color", "gray"),
-                                              ]
-                                },
-
-                            ])
-            display (df)
             
             coments = list(zip(self.com12[1],self.com12[2], self.com12[3]))
-            df = pd.DataFrame(coments, index =self.com1[0],columns =['System: If it was difficult to recover from any mistake, please comment on the problems.', 'Information:if any information was not clear, what difficulties did you face?', 'What functions and capabilities would you like to see in this system?'])
-        
-            df = df.style.format(na_rep='No Coments').set_table_styles([
+            df1 = pd.DataFrame(coments, index =self.com1[0],columns =['System: If it was difficult to recover from any mistake, please comment on the problems.', 'Information:if any information was not clear, what difficulties did you face?', 'What functions and capabilities would you like to see in this system?'])
+            dfmid = pd.DataFrame([[' ', ' ', ' ']], index = ['file 2'], columns =['System: If it was difficult to recover from any mistake, please comment on the problems.', 'Information:if any information was not clear, what difficulties did you face?', 'What functions and capabilities would you like to see in this system?'])
+            frames = [df,dfmid ,df1]
+            tab = pd.concat(frames)
+            
+            tab = tab.style.format(na_rep='No Coments').set_table_styles([
                                 {
                                     "selector":"thead",
                                     "props": [("background-color", "gray"),
                                               ]
                                 },
+                                {
+                                    "selector":".row"+str(len(df)),
+                                    "props": [("background-color", "gray"),
+                                              ]
+                                },
 
                             ])
-            display (df)
+            display (tab)
+            # display (df1)
+            
+
+            
             if format=='pdf':
                 print("loading pdf...")
                 path=str(os.path.join(Path.home(), "Downloads", "Software_Coments.pdf"))
                 pathAct = str(os.path.join(Path().absolute(), "excDoc", "Software_Usability_coments.pdf"))    
-                dfi.export(df, pathAct)
+                dfi.export(tab, pathAct)
                 doc = aw.Document()
                 builder = aw.DocumentBuilder(doc)
                 builder.insert_image(pathAct)
@@ -2007,7 +2545,10 @@ class ComparedDataFile():
 
             
         #Software Usability
-    def Searching_Learning(self, format,save='notActivated', alpha=0.05):       
+    def Searching_Learning(self, format,save='notActivated', alpha=0.05 ):      
+        if type(save) != str:alpha=save
+        
+        print("level of significance: "+str(alpha))
         
         if format=='graph':
             plt.rcParams["figure.figsize"] = (16,8)
@@ -2307,309 +2848,741 @@ class ComparedDataFile():
                 print("pdf downloaded !")
         
         if format=='tab':
-            if self.size<=30 and self.size2<=30:
-                print("t-test")
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.PreSearchData[0],self.PreSearchData2[0])
-                one_tailed_p_value=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value<=alpha:
-                    res1 = 'file 2'
-                else:
-                    res1 = 'file 1'
-                ###   
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.PreSearchData[1],self.PreSearchData2[1])
-                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value2<=alpha:
-                    res2 = 'file 2'
-                else:
-                    res2 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.PreSearchData[2],self.PreSearchData2[2])
-                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value3<=alpha:
-                    res3 = 'file 2'
-                else:
-                    res3 = 'file 1'
-                ###
-                #######################################################################################################################
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[0],self.ContentSelectionData2[0])
-                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value4<=alpha:
-                    res4 = 'file 2'
-                else:
-                    res4 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[1],self.ContentSelectionData2[1])
-                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value5<=alpha:
-                    res5 = 'file 2'
-                else:
-                    res5 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[2],self.ContentSelectionData2[2])
-                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value6<=alpha:
-                    res6 = 'file 2'
-                else:
-                    res6 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[3],self.ContentSelectionData2[3])
-                one_tailed_p_value7=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value7<=alpha:
-                    res7 = 'file 2'
-                else:
-                    res7 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.ContentSelectionData[4],self.ContentSelectionData2[4])
-                one_tailed_p_value8=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value8<=alpha:
-                    res8 = 'file 2'
-                else:
-                    res8 = 'file 1'
-                ###
-                #######################################################################################################################################
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.InteractionContentData[0],self.InteractionContentData2[0])
-                one_tailed_p_value9=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value9<=alpha:
-                    res9 = 'file 2'
-                else:
-                    res9 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.InteractionContentData[1],self.InteractionContentData2[1])
-                one_tailed_p_value0=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value0<=alpha:
-                    res0 = 'file 2'
-                else:
-                    res0 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.InteractionContentData[2],self.InteractionContentData2[2])
-                one_tailed_p_value11=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value11<=alpha:
-                    res11 = 'file 2'
-                else:
-                    res11 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.InteractionContentData[3],self.InteractionContentData2[3])
-                one_tailed_p_value12=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value12<=alpha:
-                    res12 = 'file 2'
-                else:
-                    res12 = 'file 1'
-                ###
-                #################################################################################################################################
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.PostSearchData[0],self.PostSearchData2[0])
-                one_tailed_p_value13=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value13<=alpha:
-                    res13 = 'file 2'
-                else:
-                    res13 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.PostSearchData[1],self.PostSearchData2[1])
-                one_tailed_p_value14=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value14<=alpha:
-                    res14 = 'file 2'
-                else:
-                    res14 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.PostSearchData[2],self.PostSearchData2[2])
-                one_tailed_p_value15=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value15<=alpha:
-                    res15 = 'file 2'
-                else:
-                    res15 = 'file 1'
-                ###
-                ### t test 
-                t_value,p_value=stats.ttest_rel(self.PostSearchData[3],self.PostSearchData2[3])
-                one_tailed_p_value16=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value16<=alpha:
-                    res16 = 'file 2'
-                else:
-                    res16 = 'file 1'
-                ###
-                d = {'categories': ['Background knowledge', 'Interest in topic', 'Anticipated difficulty'], 'file 1': [self.PreSearch[0][0], self.PreSearch[0][1],self.PreSearch[0][2]], 'file 2': [self.PreSearch2[0][0], self.PreSearch2[0][1],self.PreSearch2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
 
-                d = {'categories': ['Actual difficulty', 'text presentation quality', 'average number of doc view per search','the usefullness of search results', 'text relevance'], 'file 1': [self.ContentSelection[0][0], self.ContentSelection[0][1],self.ContentSelection[0][2],self.ContentSelection[0][3],self.ContentSelection[0][4]], 'file 2:': [self.ContentSelection2[0][0], self.ContentSelection2[0][1],self.ContentSelection2[0][2],self.ContentSelection2[0][3],self.ContentSelection2[0][4]], 'p-value': [one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6,one_tailed_p_value7, one_tailed_p_value8], 'Best file': [res4, res5, res6, res7, res8]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
-
-                d = {'categories': ['Cognitively engaged', 'Suggestion skills', 'System understanding input', 'average level of satisfaction'], 'file 1': [self.InteractionContent[0][0], self.InteractionContent[0][1],self.InteractionContent[0][2],self.InteractionContent[0][3]], 'file 2': [self.InteractionContent2[0][0], self.InteractionContent2[0][1],self.InteractionContent2[0][2],self.InteractionContent2[0][3]], 'p-value': [one_tailed_p_value9, one_tailed_p_value0,one_tailed_p_value11, one_tailed_p_value12], 'Best file': [res9, res0, res11, res12]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
-
-                d = {'categories': ['Search succes', 'Presentation of the search results', 'Expansion of knowledge after the search', 'Understanding about the topic'], 'file 1': [self.PostSearch[0][0], self.PostSearch[0][1],self.PostSearch[0][2],self.PostSearch[0][3]], 'file 2': [self.PostSearch2[0][0], self.PostSearch2[0][1],self.PostSearch2[0][2],self.PostSearch2[0][3]], 'p-value': [one_tailed_p_value13, one_tailed_p_value14,one_tailed_p_value15, one_tailed_p_value16], 'Best file': [res13, res14, res15, res16]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
-            else:
+            if self.size<=30 or self.size2<=30 or not self.diff_size:
+                print('type of test: t-test')
+                print("problem= i'm only testing if the difference is existent + success and overall different")
                 
-                print("z-test en travaux")
+                if self.link=='independant':
+                    print('independant')
+                    ###################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.PreSearchData[0],self.PreSearchData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value=p_value
+                    if one_tailed_p_value>alpha:
+                        res1 = 'no'
+                        best1 = '/'
+                    else:
+                        res1 = 'yes'
+                        if t_value<0:
+                            best1 = 'file 2'
+                        else:
+                            best1 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.PreSearchData[1],self.PreSearchData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value2=p_value
+                    if one_tailed_p_value2>alpha:
+                        res2 = 'no'
+                        best2 = '/'
+                    else:
+                        res2 = 'yes'
+                        if t_value<0:
+                            best2 = 'file 2'
+                        else:
+                            best2 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.PreSearchData[2],self.PreSearchData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value3=p_value
+                    if one_tailed_p_value3>alpha:
+                        res3 = 'no'
+                        best3 = '/'
+                    else:
+                        res3 = 'yes'
+                        if t_value<0:
+                            best3 = 'file 2'
+                        else:
+                            best3 = 'file 1'
+                    ###
+                    #######################################################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.ContentSelectionData[0],self.ContentSelectionData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value4=p_value
+                    if one_tailed_p_value4>alpha:
+                        res4 = 'no'
+                        best4 = '/'
+                    else:
+                        res4 = 'yes'
+                        if t_value<0:
+                            best4 = 'file 2'
+                        else:
+                            best4 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.ContentSelectionData[1],self.ContentSelectionData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value5=p_value
+                    if one_tailed_p_value5>alpha:
+                        res5 = 'no'
+                        best5 = '/'
+                    else:
+                        res5 = 'yes'
+                        if t_value<0:
+                            best5 = 'file 2'
+                        else:
+                            best5 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.ContentSelectionData[2],self.ContentSelectionData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value6=p_value
+                    if one_tailed_p_value6>alpha:
+                        res6 = 'no'
+                        best6 = '/'
+                    else:
+                        res6 = 'yes'
+                        if t_value<0:
+                            best6 = 'file 2'
+                        else:
+                            best6 = 'file 1'
+                    ###
+
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.ContentSelectionData[3],self.ContentSelectionData2[3], equal_var=self.diff_size)
+                    one_tailed_p_value7=p_value
+                    if one_tailed_p_value7>alpha:
+                        res7 = 'no'
+                        best7 = '/'
+                    else:
+                        res7 = 'yes'
+                        if t_value<0:
+                            best7 = 'file 2'
+                        else:
+                            best7 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.ContentSelectionData[4],self.ContentSelectionData2[4], equal_var=self.diff_size)
+                    one_tailed_p_value8=p_value
+                    if one_tailed_p_value8>alpha:
+                        res8 = 'no'
+                        best8 = '/'
+                    else:
+                        res8 = 'yes'
+                        if t_value<0:
+                            best8 = 'file 2'
+                        else:
+                            best8 = 'file 1'
+                    ###
+                    #####################################################################################################################"
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.InteractionContentData[0],self.InteractionContentData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value9=p_value
+                    if one_tailed_p_value9>alpha:
+                        res9 = 'no'
+                        best9 = '/'
+                    else:
+                        res9 = 'yes'
+                        if t_value<0:
+                            best9 = 'file 2'
+                        else:
+                            best9 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.InteractionContentData[1],self.InteractionContentData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value0=p_value
+                    if one_tailed_p_value0>alpha:
+                        res0 = 'no'
+                        best0 = '/'
+                    else:
+                        res0 = 'yes'
+                        if t_value<0:
+                            best0 = 'file 2'
+                        else:
+                            best0 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.InteractionContentData[2],self.InteractionContentData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value11=p_value
+                    if one_tailed_p_value11>alpha:
+                        res11 = 'no'
+                        best11 = '/'
+                    else:
+                        res11 = 'yes'
+                        if t_value<0:
+                            best11 = 'file 2'
+                        else:
+                            best11 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.InteractionContentData[3],self.InteractionContentData2[3], equal_var=self.diff_size)
+                    one_tailed_p_value12=p_value
+                    if one_tailed_p_value12>alpha:
+                        res12 = 'no'
+                        best12 = '/'
+                    else:
+                        res12 = 'yes'
+                        if t_value<0:
+                            best12 = 'file 2'
+                        else:
+                            best12 = 'file 1'
+                    ###
+                    ##############################################################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.PostSearchData[0],self.PostSearchData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value13=p_value
+                    if one_tailed_p_value13>alpha:
+                        res13 = 'no'
+                        best13 = '/'
+                    else:
+                        res13 = 'yes'
+                        if t_value<0:
+                            best13 = 'file 2'
+                        else:
+                            best13 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.PostSearchData[1],self.PostSearchData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value14=p_value
+                    if one_tailed_p_value14>alpha:
+                        res14 = 'no'
+                        best14 = '/'
+                    else:
+                        res14 = 'yes'
+                        if t_value<0:
+                            best14 = 'file 2'
+                        else:
+                            best14 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.PostSearchData[2],self.PostSearchData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value15=p_value
+                    if one_tailed_p_value15>alpha:
+                        res15 = 'no'
+                        best15 = '/'
+                    else:
+                        res15 = 'yes'
+                        if t_value<0:
+                            best15 = 'file 2'
+                        else:
+                            best15 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.PostSearchData[3],self.PostSearchData2[3], equal_var=self.diff_size)
+                    one_tailed_p_value16=p_value
+                    if one_tailed_p_value16>alpha:
+                        res16 = 'no'
+                        best16 = '/'
+                    else:
+                        res16 = 'yes'
+                        if t_value<0:
+                            best16 = 'file 2'
+                        else:
+                            best16 = 'file 1'
+                    ###
+
+                    dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Search formulation'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                    d = {'categories': ['Background knowledge', 'Interest in topic', 'Anticipated difficulty'], 'file 1': [self.PreSearch[0][0], self.PreSearch[0][1],self.PreSearch[0][2]], 'file 2': [self.PreSearch2[0][0], self.PreSearch2[0][1],self.PreSearch2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Significant diff': [res1, res2, res3], 'Best file': [best1, best2, best3]}
+                    df = pd.DataFrame(data=d)
+
+                    dfmid1 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Content Selection'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                    d = {'categories': ['Actual difficulty', 'text presentation quality', 'average number of doc view per search','the usefullness of search results', 'text relevance'], 'file 1': [self.ContentSelection[0][0], self.ContentSelection[0][1],self.ContentSelection[0][2],self.ContentSelection[0][3],self.ContentSelection[0][4]], 'file 2': [self.ContentSelection2[0][0], self.ContentSelection2[0][1],self.ContentSelection2[0][2],self.ContentSelection2[0][3],self.ContentSelection2[0][4]], 'p-value': [one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6,one_tailed_p_value7, one_tailed_p_value8], 'Significant diff': [res4, res5, res6, res7, res8], 'Best file': [best4, best5, best6, best7, best8] }
+                    df1 = pd.DataFrame(data=d)
+
+                    dfmid2 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Interaction with content'], columns =['categories', 'file 1', 'file 2','p-value','Significant diff', 'Best file' ])
+                    d = {'categories': ['Cognitively engaged', 'Suggestion skills', 'System understanding input', 'average level of satisfaction'], 'file 1': [self.InteractionContent[0][0], self.InteractionContent[0][1],self.InteractionContent[0][2],self.InteractionContent[0][3]], 'file 2': [self.InteractionContent2[0][0], self.InteractionContent2[0][1],self.InteractionContent2[0][2],self.InteractionContent2[0][3]], 'p-value': [one_tailed_p_value9, one_tailed_p_value0,one_tailed_p_value11, one_tailed_p_value12], 'Significant diff': [res9, res0, res11, res12], 'Best file': [best9, best0, best11, best12] }
+                    df2 = pd.DataFrame(data=d)
+
+                    dfmid3 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Post-Search'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff','Best file' ])
+                    d = {'categories': ['Search success', 'Presentation of the search results', 'Expansion of knowledge after the search', 'Understanding about the topic'], 'file 1': [self.PostSearch[0][0], self.PostSearch[0][1],self.PostSearch[0][2],self.PostSearch[0][3]], 'file 2': [self.PostSearch2[0][0], self.PostSearch2[0][1],self.PostSearch2[0][2],self.PostSearch2[0][3]], 'p-value': [one_tailed_p_value13, one_tailed_p_value14,one_tailed_p_value15, one_tailed_p_value16], 'Significant diff': [res13, res14, res15, res16], 'Best file': [best13, best14, best15, best16]}
+                    df3 = pd.DataFrame(data=d)
+
+
+                    frames = [dfmid, df, dfmid1,df1, dfmid2, df2,  dfmid3, df3]
+                    tab = pd.concat(frames)
+                    display(tab)
+                    
+                if self.link=='dependant':
+                    print('dependant')
+                    ###################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.PreSearchData[0],self.PreSearchData2[0])
+                    one_tailed_p_value=p_value/2
+                    if one_tailed_p_value>alpha:
+                        res1 = 'no'
+                        best1 = '/'
+                    else:
+                        res1 = 'yes'
+                        if t_value<0:
+                            best1 = 'file 2'
+                        else:
+                            best1 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.PreSearchData[1],self.PreSearchData2[1])
+                    one_tailed_p_value2=p_value/2
+                    if one_tailed_p_value2>alpha:
+                        res2 = 'no'
+                        best2 = '/'
+                    else:
+                        res2 = 'yes'
+                        if t_value<0:
+                            best2 = 'file 2'
+                        else:
+                            best2 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.PreSearchData[2],self.PreSearchData2[2])
+                    one_tailed_p_value3=p_value/2
+                    if one_tailed_p_value3>alpha:
+                        res3 = 'no'
+                        best3 = '/'
+                    else:
+                        res3 = 'yes'
+                        if t_value<0:
+                            best3 = 'file 2'
+                        else:
+                            best3 = 'file 1'
+                    ###
+                    #######################################################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.ContentSelectionData[0],self.ContentSelectionData2[0])
+                    one_tailed_p_value4=p_value/2
+                    if one_tailed_p_value4>alpha:
+                        res4 = 'no'
+                        best4 = '/'
+                    else:
+                        res4 = 'yes'
+                        if t_value<0:
+                            best4 = 'file 2'
+                        else:
+                            best4 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.ContentSelectionData[1],self.ContentSelectionData2[1])
+                    one_tailed_p_value5=p_value/2
+                    if one_tailed_p_value5>alpha:
+                        res5 = 'no'
+                        best5 = '/'
+                    else:
+                        res5 = 'yes'
+                        if t_value<0:
+                            best5 = 'file 2'
+                        else:
+                            best5 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.ContentSelectionData[2],self.ContentSelectionData2[2])
+                    one_tailed_p_value6=p_value/2
+                    if one_tailed_p_value6>alpha:
+                        res6 = 'no'
+                        best6 = '/'
+                    else:
+                        res6 = 'yes'
+                        if t_value<0:
+                            best6 = 'file 2'
+                        else:
+                            best6 = 'file 1'
+                    ###
+
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.ContentSelectionData[3],self.ContentSelectionData2[3])
+                    one_tailed_p_value7=p_value/2
+                    if one_tailed_p_value7>alpha:
+                        res7 = 'no'
+                        best7 = '/'
+                    else:
+                        res7 = 'yes'
+                        if t_value<0:
+                            best7 = 'file 2'
+                        else:
+                            best7 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.ContentSelectionData[4],self.ContentSelectionData2[4])
+                    one_tailed_p_value8=p_value/2
+                    if one_tailed_p_value8>alpha:
+                        res8 = 'no'
+                        best8 = '/'
+                    else:
+                        res8 = 'yes'
+                        if t_value<0:
+                            best8 = 'file 2'
+                        else:
+                            best8 = 'file 1'
+                    ###
+                    #####################################################################################################################"
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.InteractionContentData[0],self.InteractionContentData2[0])
+                    one_tailed_p_value9=p_value/2
+                    if one_tailed_p_value9>alpha:
+                        res9 = 'no'
+                        best9 = '/'
+                    else:
+                        res9 = 'yes'
+                        if t_value<0:
+                            best9 = 'file 2'
+                        else:
+                            best9 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.InteractionContentData[1],self.InteractionContentData2[1])
+                    one_tailed_p_value0=p_value/2
+                    if one_tailed_p_value0>alpha:
+                        res0 = 'no'
+                        best0 = '/'
+                    else:
+                        res0 = 'yes'
+                        if t_value<0:
+                            best0 = 'file 2'
+                        else:
+                            best0 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.InteractionContentData[2],self.InteractionContentData2[2])
+                    one_tailed_p_value11=p_value/2
+                    if one_tailed_p_value11>alpha:
+                        res11 = 'no'
+                        best11 = '/'
+                    else:
+                        res11 = 'yes'
+                        if t_value<0:
+                            best11 = 'file 2'
+                        else:
+                            best11 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.InteractionContentData[3],self.InteractionContentData2[3])
+                    one_tailed_p_value12=p_value/2
+                    if one_tailed_p_value12>alpha:
+                        res12 = 'no'
+                        best12 = '/'
+                    else:
+                        res12 = 'yes'
+                        if t_value<0:
+                            best12 = 'file 2'
+                        else:
+                            best12 = 'file 1'
+                    ###
+                    ##############################################################################################################################
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.PostSearchData[0],self.PostSearchData2[0])
+                    one_tailed_p_value13=p_value/2
+                    if one_tailed_p_value13>alpha:
+                        res13 = 'no'
+                        best13 = '/'
+                    else:
+                        res13 = 'yes'
+                        if t_value<0:
+                            best13 = 'file 2'
+                        else:
+                            best13 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.PostSearchData[1],self.PostSearchData2[1])
+                    one_tailed_p_value14=p_value/2
+                    if one_tailed_p_value14>alpha:
+                        res14 = 'no'
+                        best14 = '/'
+                    else:
+                        res14 = 'yes'
+                        if t_value<0:
+                            best14 = 'file 2'
+                        else:
+                            best14 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.PostSearchData[2],self.PostSearchData2[2])
+                    one_tailed_p_value15=p_value/2
+                    if one_tailed_p_value15>alpha:
+                        res15 = 'no'
+                        best15 = '/'
+                    else:
+                        res15 = 'yes'
+                        if t_value<0:
+                            best15 = 'file 2'
+                        else:
+                            best15 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.PostSearchData[3],self.PostSearchData2[3])
+                    one_tailed_p_value16=p_value/2
+                    if one_tailed_p_value16>alpha:
+                        res16 = 'no'
+                        best16 = '/'
+                    else:
+                        res16 = 'yes'
+                        if t_value<0:
+                            best16 = 'file 2'
+                        else:
+                            best16 = 'file 1'
+                    ###
+
+                    dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Search formulation'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                    d = {'categories': ['Background knowledge', 'Interest in topic', 'Anticipated difficulty'], 'file 1': [self.PreSearch[0][0], self.PreSearch[0][1],self.PreSearch[0][2]], 'file 2': [self.PreSearch2[0][0], self.PreSearch2[0][1],self.PreSearch2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Significant diff': [res1, res2, res3], 'Best file': [best1, best2, best3]}
+                    df = pd.DataFrame(data=d)
+
+                    dfmid1 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Content Selection'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                    d = {'categories': ['Actual difficulty', 'text presentation quality', 'average number of doc view per search','the usefullness of search results', 'text relevance'], 'file 1': [self.ContentSelection[0][0], self.ContentSelection[0][1],self.ContentSelection[0][2],self.ContentSelection[0][3],self.ContentSelection[0][4]], 'file 2': [self.ContentSelection2[0][0], self.ContentSelection2[0][1],self.ContentSelection2[0][2],self.ContentSelection2[0][3],self.ContentSelection2[0][4]], 'p-value': [one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6,one_tailed_p_value7, one_tailed_p_value8], 'Significant diff': [res4, res5, res6, res7, res8], 'Best file': [best4, best5, best6, best7, best8] }
+                    df1 = pd.DataFrame(data=d)
+
+                    dfmid2 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Interaction with content'], columns =['categories', 'file 1', 'file 2','p-value','Significant diff', 'Best file' ])
+                    d = {'categories': ['Cognitively engaged', 'Suggestion skills', 'System understanding input', 'average level of satisfaction'], 'file 1': [self.InteractionContent[0][0], self.InteractionContent[0][1],self.InteractionContent[0][2],self.InteractionContent[0][3]], 'file 2': [self.InteractionContent2[0][0], self.InteractionContent2[0][1],self.InteractionContent2[0][2],self.InteractionContent2[0][3]], 'p-value': [one_tailed_p_value9, one_tailed_p_value0,one_tailed_p_value11, one_tailed_p_value12], 'Significant diff': [res9, res0, res11, res12], 'Best file': [best9, best0, best11, best12] }
+                    df2 = pd.DataFrame(data=d)
+
+                    dfmid3 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Post-Search'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff','Best file' ])
+                    d = {'categories': ['Search success', 'Presentation of the search results', 'Expansion of knowledge after the search', 'Understanding about the topic'], 'file 1': [self.PostSearch[0][0], self.PostSearch[0][1],self.PostSearch[0][2],self.PostSearch[0][3]], 'file 2': [self.PostSearch2[0][0], self.PostSearch2[0][1],self.PostSearch2[0][2],self.PostSearch2[0][3]], 'p-value': [one_tailed_p_value13, one_tailed_p_value14,one_tailed_p_value15, one_tailed_p_value16], 'Significant diff': [res13, res14, res15, res16], 'Best file': [best13, best14, best15, best16]}
+                    df3 = pd.DataFrame(data=d)
+
+
+                    frames = [dfmid, df, dfmid1,df1, dfmid2, df2,  dfmid3, df3]
+                    tab = pd.concat(frames)
+                    display(tab)
+
+
+
+            else:
                 ### z-test 
                 ztest_Score, p_value= ztest(x1=self.PreSearchData[0], x2=self.PreSearchData2[0], alternative='larger')
-                one_tailed_p_value=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value>=alpha:
-                    res1 = 'file 2'
+                one_tailed_p_value1=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value1<=alpha:
+                    res1 = 'no'
+                    best1 = '/'
                 else:
-                    res1 = 'file 1'
+                    res1 = 'yes'
+                    if ztest_Score<0:
+                        best1 = 'file 2'
+                    else:
+                        best1 = 'file 1'
+                ###   
+                ### z-test 
+                ztest_Score, p_value= ztest(x1=self.PreSearchData[1], x2=self.PreSearchData2[1], alternative='larger')
+                one_tailed_p_value2=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value2>alpha:
+                    res2 = 'no'
+                    best2 = '/'
+                else:
+                    res2 = 'yes'
+                    if ztest_Score<0:
+                        best2 = 'file 2'
+                    else:
+                        best2 = 'file 1'
                 ###   
                 ### z test 
-                ztest_Score, p_value= ztest(x1=self.PreSearchData[1], x2=self.PreSearchData2[1], alternative='larger')
-                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value2>=alpha:
-                    res2 = 'file 2'
-                else:
-                    res2 = 'file 1'
-                ###
-                ### z test 
                 ztest_Score, p_value= ztest(x1=self.PreSearchData[2], x2=self.PreSearchData2[2], alternative='larger')
-                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value3>=alpha:
-                    res3 = 'file 2'
+                one_tailed_p_value3=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value3>alpha:
+                    res3 = 'no'
+                    best3 = '/'
                 else:
-                    res3 = 'file 1'
+                    res3 = 'yes'
+                    if ztest_Score<0:
+                        best3 = 'file 2'
+                    else:
+                        best3 = 'file 1'
                 ###
                 #######################################################################################################################
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.ContentSelectionData[0], x2=self.ContentSelectionData2[0], alternative='larger')
-                one_tailed_p_value4=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value4>=alpha:
-                    res4 = 'file 2'
+                one_tailed_p_value4=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value4>alpha:
+                    res4 = 'no'
+                    best4 = '/'
                 else:
-                    res4 = 'file 1'
+                    res4 = 'yes'
+                    if ztest_Score<0:
+                        best4 = 'file 2'
+                    else:
+                        best4 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.ContentSelectionData[1], x2=self.ContentSelectionData2[1], alternative='larger')
-                one_tailed_p_value5=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value5>=alpha:
-                    res5 = 'file 2'
+                one_tailed_p_value5=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value5>alpha:
+                    res5 = 'no'
+                    best5 = '/'
                 else:
-                    res5 = 'file 1'
+                    res5 = 'yes'
+                    if ztest_Score<0:
+                        best5 = 'file 2'
+                    else:
+                        best5 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.ContentSelectionData[2], x2=self.ContentSelectionData2[2], alternative='larger')
-                one_tailed_p_value6=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value6>=alpha:
-                    res6 = 'file 2'
+                one_tailed_p_value6=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value6>alpha:
+                    res6 = 'no'
+                    best6 = '/'
                 else:
-                    res6 = 'file 1'
+                    res6 = 'yes'
+                    if ztest_Score<0:
+                        best6 = 'file 2'
+                    else:
+                        best6 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.ContentSelectionData[3], x2=self.ContentSelectionData2[3], alternative='larger')
-                one_tailed_p_value7=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value7>=alpha:
-                    res7 = 'file 2'
+                one_tailed_p_value7=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value7>alpha:
+                    res7 = 'no'
+                    best7 = '/'
                 else:
-                    res7 = 'file 1'
+                    res7 = 'yes'
+                    if ztest_Score<0:
+                        best7 = 'file 2'
+                    else:
+                        best7 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.ContentSelectionData[4], x2=self.ContentSelectionData2[4], alternative='larger')
-                one_tailed_p_value8=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value8>=alpha:
-                    res8 = 'file 2'
+                one_tailed_p_value8=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value8>alpha:
+                    res8 = 'no'
+                    best8 = '/'
                 else:
-                    res8 = 'file 1'
+                    res8 = 'yes'
+                    if ztest_Score<0:
+                        best8 = 'file 2'
+                    else:
+                        best8 = 'file 1'
                 ###
                 #######################################################################################################################################
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.InteractionContentData[0], x2=self.InteractionContentData2[0], alternative='larger')
-                one_tailed_p_value9=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value9>=alpha:
-                    res9 = 'file 2'
+                one_tailed_p_value9=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value9>alpha:
+                    res9 = 'no'
+                    best9 = '/'
                 else:
-                    res9 = 'file 1'
+                    res9 = 'yes'
+                    if ztest_Score<0:
+                        best9 = 'file 2'
+                    else:
+                        best9 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.InteractionContentData[1], x2=self.InteractionContentData2[1], alternative='larger')
-                one_tailed_p_value0=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value0>=alpha:
-                    res0 = 'file 2'
+                one_tailed_p_value0=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value0>alpha:
+                    res0 = 'no'
+                    best0 = '/'
                 else:
-                    res0 = 'file 1'
+                    res0 = 'yes'
+                    if ztest_Score<0:
+                        best0 = 'file 2'
+                    else:
+                        best0 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.InteractionContentData[2], x2=self.InteractionContentData2[2], alternative='larger')
-                one_tailed_p_value11=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value11>=alpha:
-                    res11 = 'file 2'
+                one_tailed_p_value11=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value11>alpha:
+                    res11 = 'no'
+                    best11 = '/'
                 else:
-                    res11 = 'file 1'
+                    res11 = 'yes'
+                    if ztest_Score<0:
+                        best11 = 'file 2'
+                    else:
+                        best11 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.InteractionContentData[3], x2=self.InteractionContentData2[3], alternative='larger')
-                one_tailed_p_value12=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value12>=alpha:
-                    res12 = 'file 2'
+                one_tailed_p_value12=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value12>alpha:
+                    res12 = 'no'
+                    best12 = '/'
                 else:
-                    res12 = 'file 1'
+                    res12 = 'yes'
+                    if ztest_Score<0:
+                        best12 = 'file 2'
+                    else:
+                        best12 = 'file 1'
                 ###
                 #################################################################################################################################
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.PostSearchData[0], x2=self.PostSearchData2[0], alternative='larger')
-                one_tailed_p_value13=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value13>=alpha:
-                    res13 = 'file 2'
+                one_tailed_p_value13=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value13>alpha:
+                    res13 = 'no'
+                    best13 = '/'
                 else:
-                    res13 = 'file 1'
+                    res13 = 'yes'
+                    if ztest_Score<0:
+                        best13 = 'file 2'
+                    else:
+                        best13 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.PostSearchData[1], x2=self.PostSearchData2[1], alternative='larger')
-                one_tailed_p_value14=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value14>=alpha:
-                    res14 = 'file 2'
+                one_tailed_p_value14=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value14>alpha:
+                    res14 = 'no'
+                    best14 = '/'
                 else:
-                    res14 = 'file 1'
+                    res14 = 'yes'
+                    if ztest_Score<0:
+                        best14 = 'file 2'
+                    else:
+                        best14 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.PostSearchData[2], x2=self.PostSearchData2[2], alternative='larger')
-                one_tailed_p_value15=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value15>=alpha:
-                    res15 = 'file 2'
+                one_tailed_p_value15=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value15>alpha:
+                    res15 = 'no'
+                    best15 = '/'
                 else:
-                    res15 = 'file 1'
+                    res13 = 'yes'
+                    if ztest_Score<0:
+                        best15 = 'file 2'
+                    else:
+                        best15 = 'file 1'
                 ###
                 ### z test 
                 ztest_Score, p_value= ztest(x1=self.PostSearchData[3], x2=self.PostSearchData2[3], alternative='larger')
-                one_tailed_p_value16=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value16>=alpha:
-                    res16 = 'file 2'
+                one_tailed_p_value16=p_value
+                print(str(ztest_Score))
+                if one_tailed_p_value16>alpha:
+                    res16 = 'no'
+                    best16 = '/'
                 else:
-                    res16 = 'file 1'
+                    res16 = 'yes'
+                    if ztest_Score<0:
+                        best16 = 'file 2'
+                    else:
+                        best16 = 'file 1'
                 ###
-                d = {'categories': ['Background knowledge', 'Interest in topic', 'Anticipated difficulty'], 'file 1': [self.PreSearch[0][0], self.PreSearch[0][1],self.PreSearch[0][2]], 'file 2': [self.PreSearch2[0][0], self.PreSearch2[0][1],self.PreSearch2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
+                dfmid = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Search formulation'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                d = {'categories': ['Background knowledge', 'Interest in topic', 'Anticipated difficulty'], 'file 1': [self.PreSearch[0][0], self.PreSearch[0][1],self.PreSearch[0][2]], 'file 2': [self.PreSearch2[0][0], self.PreSearch2[0][1],self.PreSearch2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Significant diff': [res1, res2, res3], 'Best file': [best1, best2, best3]}
+                df = pd.DataFrame(data=d)
 
-                d = {'categories': ['Actual difficulty', 'text presentation quality', 'average number of doc view per search','the usefullness of search results', 'text relevance'], 'file 1': [self.ContentSelection[0][0], self.ContentSelection[0][1],self.ContentSelection[0][2],self.ContentSelection[0][3],self.ContentSelection[0][4]], 'file 2:': [self.ContentSelection2[0][0], self.ContentSelection2[0][1],self.ContentSelection2[0][2],self.ContentSelection2[0][3],self.ContentSelection2[0][4]], 'p-value': [one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6,one_tailed_p_value7, one_tailed_p_value8], 'Best file': [res4, res5, res6, res7, res8]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
+                dfmid1 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Content Selection'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff', 'Best file' ])
+                d = {'categories': ['Actual difficulty', 'text presentation quality', 'average number of doc view per search','the usefullness of search results', 'text relevance'], 'file 1': [self.ContentSelection[0][0], self.ContentSelection[0][1],self.ContentSelection[0][2],self.ContentSelection[0][3],self.ContentSelection[0][4]], 'file 2': [self.ContentSelection2[0][0], self.ContentSelection2[0][1],self.ContentSelection2[0][2],self.ContentSelection2[0][3],self.ContentSelection2[0][4]], 'p-value': [one_tailed_p_value4, one_tailed_p_value5, one_tailed_p_value6,one_tailed_p_value7, one_tailed_p_value8], 'Significant diff': [res4, res5, res6, res7, res8], 'Best file': [best4, best5, best6, best7, best8] }
+                df1 = pd.DataFrame(data=d)
 
-                d = {'categories': ['Cognitively engaged', 'Suggestion skills', 'System understanding input', 'average level of satisfaction'], 'file 1': [self.InteractionContent[0][0], self.InteractionContent[0][1],self.InteractionContent[0][2],self.InteractionContent[0][3]], 'file 2': [self.InteractionContent2[0][0], self.InteractionContent2[0][1],self.InteractionContent2[0][2],self.InteractionContent2[0][3]], 'p-value': [one_tailed_p_value9, one_tailed_p_value0,one_tailed_p_value11, one_tailed_p_value12], 'Best file': [res9, res0, res11, res12]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
+                dfmid2 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Interaction with content'], columns =['categories', 'file 1', 'file 2','p-value','Significant diff', 'Best file' ])
+                d = {'categories': ['Cognitively engaged', 'Suggestion skills', 'System understanding input', 'average level of satisfaction'], 'file 1': [self.InteractionContent[0][0], self.InteractionContent[0][1],self.InteractionContent[0][2],self.InteractionContent[0][3]], 'file 2': [self.InteractionContent2[0][0], self.InteractionContent2[0][1],self.InteractionContent2[0][2],self.InteractionContent2[0][3]], 'p-value': [one_tailed_p_value9, one_tailed_p_value0,one_tailed_p_value11, one_tailed_p_value12], 'Significant diff': [res9, res0, res11, res12], 'Best file': [best9, best0, best11, best12] }
+                df2 = pd.DataFrame(data=d)
 
-                d = {'categories': ['Search succes', 'Presentation of the search results', 'Expansion of knowledge after the search', 'Understanding about the topic'], 'file 1': [self.PostSearch[0][0], self.PostSearch[0][1],self.PostSearch[0][2],self.PostSearch[0][3]], 'file 2': [self.PostSearch2[0][0], self.PostSearch2[0][1],self.PostSearch2[0][2],self.PostSearch2[0][3]], 'p-value': [one_tailed_p_value13, one_tailed_p_value14,one_tailed_p_value15, one_tailed_p_value16], 'Best file': [res13, res14, res15, res16]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
+                dfmid3 = pd.DataFrame([[' ', ' ', ' ', ' ', ' ', ' ']], index = ['Post-Search'], columns =['categories', 'file 1', 'file 2','p-value', 'Significant diff','Best file' ])
+                d = {'categories': ['Search success', 'Presentation of the search results', 'Expansion of knowledge after the search', 'Understanding about the topic'], 'file 1': [self.PostSearch[0][0], self.PostSearch[0][1],self.PostSearch[0][2],self.PostSearch[0][3]], 'file 2': [self.PostSearch2[0][0], self.PostSearch2[0][1],self.PostSearch2[0][2],self.PostSearch2[0][3]], 'p-value': [one_tailed_p_value13, one_tailed_p_value14,one_tailed_p_value15, one_tailed_p_value16], 'Significant diff': [res13, res14, res15, res16], 'Best file': [best13, best14, best15, best16]}
+                df3 = pd.DataFrame(data=d)
+
+
+                frames = [dfmid, df, dfmid1,df1, dfmid2, df2,  dfmid3, df3]
+                tab = pd.concat(frames)
+                display(tab)
             
             if save=='pdf':
                 print("loading pdf...")
-                path=str(os.path.join(Path.home(), "Downloads", "Software_Coments.pdf"))
-                pathAct = str(os.path.join(Path().absolute(), "excDoc", "Software_Usability_coments.pdf"))    
-                dfi.export(df, pathAct)
+                path=str(os.path.join(Path.home(), "Downloads", "Searching_learning.pdf"))
+                pathAct = str(os.path.join(Path().absolute(), "excDoc", "Searching_learning.pdf"))    
+                dfi.export(tab, pathAct)
                 doc = aw.Document()
                 builder = aw.DocumentBuilder(doc)
                 builder.insert_image(pathAct)
@@ -2804,6 +3777,9 @@ class ComparedDataFile():
         
     #knowledge gain
     def Knowledge_Gain(self, format, save='notActivated', alpha = 0.05):
+        if  type(save) != str:alpha=save
+        
+        print("level of significance: "+str(alpha))
         
         if format=='graph':
             plt.rcParams["figure.figsize"] = (16,8)
@@ -2890,78 +3866,166 @@ class ComparedDataFile():
                 print("pdf downloaded !")
             
         if format=='tab':
-            if self.size<=30 and self.size2<=30:
-                print("t-test")
-                ### t test Quality
-                t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[0],self.KnowledgeGainData2[0])
-
-                one_tailed_p_value=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value<=alpha:
-                    res1 = 'file 2'
-                else:
-                    res1 = 'file 1'
-                ###   
-                ### t test Interpretation
-                t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[1],self.KnowledgeGainData2[1])
-
-                one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-
-                if one_tailed_p_value2<=alpha:
-                    res2 = 'file 2'
-                else:
-                    res2 = 'file 1'
-                ###
-                ### t test critiques
-                t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[2],self.KnowledgeGainData2[2])
-
-                one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value3<=alpha:
-                    res3 = 'file 2'
-                else:
-                    res3 = 'file 1'
-                ###
-                d = {'categories': ['Quality', 'Interpretation', 'Critiques'], 'file 1': [self.KnowledgeGain[0][0], self.KnowledgeGain[0][1],self.KnowledgeGain[0][2]], 'file 2': [self.KnowledgeGain2[0][0],self.KnowledgeGain2[0][1],self.KnowledgeGain2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
-                tab = pd.DataFrame(data=d)
-                display (tab)
+            if self.size<=30 or self.size2<=30 or not self.diff_size:
+                print('type of test: t-test')
+                print("problem= i'm only testing if the difference is existent + success and overall different")
+                if self.link=='independant':
+                    print('independant')
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.KnowledgeGainData[0],self.KnowledgeGainData2[0], equal_var=self.diff_size)
+                    one_tailed_p_value=p_value
+                    if one_tailed_p_value>alpha:
+                        res1 = 'no'
+                        best1 = '/'
+                    else:
+                        res1 = 'yes'
+                        if t_value<0:
+                            best1 = 'file 2'
+                        else:
+                            best1 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.KnowledgeGainData[1],self.KnowledgeGainData2[1], equal_var=self.diff_size)
+                    one_tailed_p_value2=p_value
+                    if one_tailed_p_value2>alpha:
+                        res2 = 'no'
+                        best2 = '/'
+                    else:
+                        res2 = 'yes'
+                        if t_value<0:
+                            best2 = 'file 2'
+                        else:
+                            best2 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_ind(self.KnowledgeGainData[2],self.KnowledgeGainData2[2], equal_var=self.diff_size)
+                    one_tailed_p_value3=p_value
+                    if one_tailed_p_value3>alpha:
+                        res3 = 'no'
+                        best3 = '/'
+                    else:
+                        res3 = 'yes'
+                        if t_value<0:
+                            best3 = 'file 2'
+                        else:
+                            best3 = 'file 1'
+                    ###
+                    
+                    #je veux tester si ils sont significment different et si oui si ils lequel est le meilleur        
+                    df = {'categories': ['Quality', 'Interpretation', 'Critiques'], 'file 1': [self.KnowledgeGain[0][0], self.KnowledgeGain[0][1],self.KnowledgeGain[0][2]], 'file 2': [self.KnowledgeGain2[0][0],self.KnowledgeGain2[0][1],self.KnowledgeGain2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Significant diff': [res1, res2, res3], 'Best File': [best1, best2, best3]}
+                    tab = pd.DataFrame(data=df)
+                    display (tab)
+                    
+                    
+                if self.link=='dependant':
+                    print('dependant')
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[0],self.KnowledgeGainData2[0])
+                    one_tailed_p_value=p_value/2
+                    if one_tailed_p_value>alpha:
+                        res1 = 'no'
+                        best1 = '/'
+                    else:
+                        res1 = 'yes'
+                        if t_value<0:
+                            best1 = 'file 2'
+                        else:
+                            best1 = 'file 1'
+                    ###   
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[1],self.KnowledgeGainData2[1])
+                    one_tailed_p_value2=p_value/2
+                    if one_tailed_p_value2>alpha:
+                        res2 = 'no'
+                        best2 = '/'
+                    else:
+                        res2 = 'yes'
+                        if t_value<0:
+                            best2 = 'file 2'
+                        else:
+                            best2 = 'file 1'
+                    ###
+                    ### t test 
+                    t_value,p_value=stats.ttest_rel(self.KnowledgeGainData[2],self.KnowledgeGainData2[2])
+                    one_tailed_p_value3=p_value/2
+                    if one_tailed_p_value3>alpha:
+                        res3 = 'no'
+                        best3 = '/'
+                    else:
+                        res3 = 'yes'
+                        if t_value<0:
+                            best3 = 'file 2'
+                        else:
+                            best3 = 'file 1'
+                    ###
+                    
+                    #je veux tester si ils sont significment different et si oui si ils lequel est le meilleur
+                    df = {'categories': ['Quality', 'Interpretation', 'Critiques'], 'file 1': [self.KnowledgeGain[0][0], self.KnowledgeGain[0][1],self.KnowledgeGain[0][2]], 'file 2': [self.KnowledgeGain2[0][0],self.KnowledgeGain2[0][1],self.KnowledgeGain2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Significant diff': [res1, res2, res3], 'Best File': [best1, best2, best3]}
+                    tab = pd.DataFrame(data=df)
+                    display (tab)
+                    
+            
             else:
+                
                 print("z-test")
                 ###z test Quality
                 ztest_Score, p_value= ztest(x1=self.KnowledgeGainData[0], x2=self.KnowledgeGainData2[0], alternative='larger')
                 one_tailed_p_value=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value>=alpha:
-                    res1 = 'file 2'
+                if one_tailed_p_value>alpha:
+                    res1 = 'no'
+                    best1 = '/'
                 else:
-                    res1 = 'file 1'
+                    res1 = 'yes'
+                    if ztest_Score<0:
+                        best1 = 'file 2'
+                    else:
+                        best1 = 'file 1'
                 ###   
                 ### z test Interpretation
                 ztest_Score, p_value= ztest(x1=self.KnowledgeGainData[1], x2=self.KnowledgeGainData2[1], alternative='larger')
                 one_tailed_p_value2=float("{:.6f}".format(p_value/2))
-
-                if one_tailed_p_value2>=alpha:
-                    res2 = 'file 2'
+                if one_tailed_p_value2>alpha:
+                    res2 = 'no'
+                    best2 = '/'
                 else:
-                    res2 = 'file 1'
+                    res2 = 'yes'
+                    if ztest_Score<0:
+                        best2 = 'file 2'
+                    else:
+                        best2 = 'file 1'
                 ###
                 ### z test critiques
                 ztest_Score, p_value= ztest(x1=self.KnowledgeGainData[2], x2=self.KnowledgeGainData2[2], alternative='larger')
                 one_tailed_p_value3=float("{:.6f}".format(p_value/2))
-                if one_tailed_p_value3>=alpha:
-                    res3 = 'file 2'
+                if one_tailed_p_value3>alpha:
+                    res3 = 'no'
+                    best3 = '/'
                 else:
-                    res3 = 'file 1'
+                    res3 = 'yes'
+                    if ztest_Score<0:
+                        best3 = 'file 2'
+                    else:
+                        best3 = 'file 1'
                 ###
-                d = {'categories': ['Quality', 'Interpretation', 'Critiques'], 'file 1': [self.KnowledgeGain[0][0], self.KnowledgeGain[0][1],self.KnowledgeGain[0][2]], 'file 2': [self.KnowledgeGain2[0][0],self.KnowledgeGain2[0][1],self.KnowledgeGain2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Best file': [res1, res2, res3]}
-                tab = pd.DataFrame(data=d)
+                df = {'categories': ['Quality', 'Interpretation', 'Critiques'], 'file 1': [self.KnowledgeGain[0][0], self.KnowledgeGain[0][1],self.KnowledgeGain[0][2]], 'file 2': [self.KnowledgeGain2[0][0],self.KnowledgeGain2[0][1],self.KnowledgeGain2[0][2]], 'p-value': [one_tailed_p_value, one_tailed_p_value2, one_tailed_p_value3], 'Significant diff': [res1, res2, res3], 'Best File': [best1, best2, best3]}
+                tab = pd.DataFrame(data=df)
                 display (tab)
+                
+                
             #pdf download
             if save=='pdf':
                 print("loading pdf...")
                 path=str(os.path.join(Path.home(), "Downloads", "Knowledge_Gain.pdf"))
-                fig.savefig(path,  bbox_inches='tight')
+                pathAct = str(os.path.join(Path().absolute(), "excDoc", "Knowledge_Gain.pdf"))    
+                dfi.export(tab, pathAct)
+                doc = aw.Document()
+                builder = aw.DocumentBuilder(doc)
+                builder.insert_image(pathAct)
+                doc.save(path)
                 print("pdf downloaded !")
 
     #knowledge gain
-    def Knowledge_Gain_Qual_Analysis(self, format='display', alpha = 0.05):
+    def Knowledge_Gain_Qual_Analysis(self, format='display'):
         
 
         plt.rcParams["figure.figsize"] = (20,8)
@@ -3020,7 +4084,7 @@ class ComparedDataFile():
 
         print('p-value for one_tailed_test is %f'%one_tailed_p_value)
 
-        if one_tailed_p_value<=alpha:
+        if one_tailed_p_value>alpha:
 
             print('Conclusion','n','Since p-value(=%f)'%one_tailed_p_value,'<','alpha(=%.2f)'%alpha,' file 2 is better. i.e., d = 0 at %.2f level of significance.'%alpha)
 
