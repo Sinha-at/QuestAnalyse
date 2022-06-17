@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'QuestAnalyse',  
   packages = ['QuestAnalyse'],   
-  version = '0.3',      # Start with a small number and increase it with every change you make
+  version = '0.4',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'allow user to test the questionnaire and compare results between questionnaire',   # short description about my library
   author = 'Nina Abittan', 
