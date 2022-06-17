@@ -8,7 +8,7 @@ setup(
   author = 'Nina Abittan', 
   author_email = '...@gmail.com',     
   url = 'https://github.com/Sinha1111/QuestAnalyse', 
-  download_url = 'https://github.com/Sinha1111/QuestAnalyse/archive/refs/tags/v_03.tar.gz',
+  download_url = 'https://github.com/Sinha1111/QuestAnalyse/archive/refs/tags/v_04.tar.gz',
   keywords = ['', '', ''],   # Keywords that define your package best
   install_requires=[            # I get to this in a second
           'pandas',
